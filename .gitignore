@@ -1,0 +1,63 @@
+# Environment & Local Secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python & Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Database & SQLite files
+*.db
+*.sqlite
+*.sqlite3
+casttrace.db
+casttrace_test.db
+
+# Storage & Uploaded Evidence (Immutable originals kept locally)
+storage/
+uploads/
+evidence/
+backend/storage/
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Machine Learning Checkpoints & Raw Datasets
+*.pt
+*.pth
+*.onnx
+*.bin
+checkpoints/
+data/
+datasets/
+ml/checkpoints/
+ml/data/
+
+# IDE & OS Files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
