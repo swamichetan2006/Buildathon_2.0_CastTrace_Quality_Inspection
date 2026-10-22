@@ -162,7 +162,7 @@ Idempotency-Key: <UUIDv4 or client-generated unique string>
 - **Response `201 Created`:** Batch details with `status: "IN_PRODUCTION"`.
 
 #### `POST /batches/{id}/hold`
-- **Purpose:** Immediately place batch on quality containment hold.
+- **Purpose:** Operational containment hold — immediately suspends batch shipping/movement on the shop floor.
 - **Role:** `INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER`.
 - **Request Body:**
   ```json
@@ -172,9 +172,10 @@ Idempotency-Key: <UUIDv4 or client-generated unique string>
   ```
 - **Response `200 OK`:** Updated batch object with `status: "ON_HOLD"`.
 
+
 #### `POST /batches/{id}/decisions`
-- **Purpose:** Authorize engineering release (or optional extensions: scrap, concession) for a batch.
-- **Role:** `QUALITY_MANAGER` only.
+- **Purpose:** Authorize official engineering governance decision (`RELEASE`, `HOLD`, `REJECT_SCRAP`, `CONCESSION_DEVIATION`) for a batch.
+- **Role:** `QUALITY_MANAGER` only (`INSPECTOR` and `SUPERVISOR` receive `403 Forbidden`).
 - **Headers:** `Idempotency-Key` (Recommended).
 - **Core Decisions:** `RELEASE`, `HOLD`.
 - **Optional Extensions:** `REJECT_SCRAP`, `CONCESSION_DEVIATION`.

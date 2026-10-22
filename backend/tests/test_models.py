@@ -23,12 +23,13 @@ def test_models_persistence(db_session):
     """Verify that all core entities from docs/erd.md can be instantiated and saved."""
     # 1. User
     user = User(
-        username="test_inspector",
-        email="test_inspector@example.com",
+        username="persisted_inspector",
+        email="persisted_inspector@example.com",
         full_name="Test Inspector",
         role="INSPECTOR",
         hashed_password="fakehashpassword123",
     )
+
     db_session.add(user)
     db_session.commit()
     assert user.id is not None

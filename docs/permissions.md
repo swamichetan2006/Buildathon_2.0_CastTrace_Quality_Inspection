@@ -12,9 +12,9 @@ CastTrace AI implements a strict Role-Based Access Control (RBAC) model across t
 
 | Role Name | Identifier | Core Operational Focus | Record Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Inspector** | `INSPECTOR` | Shop-floor imaging, visual quality verification, and defect logging. | **Operational Scope:** Read access to all products, batches, and model runs. Full write/update access to assigned inspections, items, images, and reviews. Read-only for batch decisions and audit logs. |
-| **Production Supervisor** | `SUPERVISOR` | Production line oversight, batch creation, and CAPA remediation execution. | **Production Scope:** Read access to all products, batches, inspections, and defects. Write access to create batches, assign/update corrective actions in their shift, and initiate batch holds. Read-only for model weights, reviews, and audit logs. |
-| **Quality Manager** | `QUALITY_MANAGER` | Final quality authority, dispute adjudication, release gatekeeper, and compliance audit. | **Enterprise Scope:** Unrestricted read access across all entities, logs, and historical archives. Exclusive authorization to release batches, scrap lots, resolve review disputes, and configure ML model deployment. |
+| **Inspector** | `INSPECTOR` | Shop-floor imaging, visual quality verification, and defect logging. | **Operational Scope:** Read access to all products, batches, and model runs. Full write/update access to assigned inspections, items, images, and reviews. Permitted to trigger operational containment holds (`POST /batches/{id}/hold`) when non-conformances are detected. Official batch decisions (`POST /batches/{id}/decisions`) are strictly denied. Read-only for audit logs. |
+| **Production Supervisor** | `SUPERVISOR` | Production line oversight, batch creation, and CAPA remediation execution. | **Production Scope:** Read access to all products, batches, inspections, and defects. Write access to create batches, assign/update corrective actions in their shift, and initiate operational containment holds (`POST /batches/{id}/hold`). Official batch decisions (`POST /batches/{id}/decisions`) are strictly restricted to Quality Manager. |
+| **Quality Manager** | `QUALITY_MANAGER` | Final quality authority, dispute adjudication, release gatekeeper, and compliance audit. | **Enterprise Scope:** Unrestricted read access across all entities, logs, and historical archives. Exclusive authorization to record official batch decisions (HOLD, RELEASE, SCRAP, CONCESSION) via `POST /batches/{id}/decisions`, resolve review disputes, and configure ML model deployment. |
 
 ---
 
@@ -34,9 +34,9 @@ Legend:
 | **Batches** | View Batch Details & History | ALLOW | ALLOW | ALLOW | API (`GET /batches`) |
 | | Create New Production Batch | DENY | ALLOW | ALLOW | API (`POST /batches`) |
 | | Edit Batch Metadata (e.g., Heat #) | DENY | OWN / COND | ALLOW | API (`PATCH /batches/{id}`) |
-| | Place Batch on Quality `HOLD` | ALLOW | ALLOW | ALLOW | API (`POST /batches/{id}/hold`) |
-| | Authorize Batch `RELEASE` | **DENY** | **DENY** | **ALLOW** | API (`POST /batches/{id}/decisions`) |
-| | Authorize Batch `SCRAP` | **DENY** | **DENY** | **ALLOW** | API (`POST /batches/{id}/decisions`) |
+| | Operational Containment `HOLD` | ALLOW | ALLOW | ALLOW | API (`POST /batches/{id}/hold`) |
+| | Official Batch Decision (`RELEASE`, `HOLD`, `SCRAP`, `CONCESSION`) | **DENY** | **DENY** | **ALLOW** | API (`POST /batches/{id}/decisions`) |
+
 | **Inspections** | View Inspections | ALLOW | ALLOW | ALLOW | API (`GET /inspections`) |
 | | Create Draft Inspection | ALLOW | ALLOW | ALLOW | API (`POST /inspections`) |
 | | Add Items & Upload Images | ALLOW | DENY | ALLOW | API (`POST /inspections/{id}/items`) |
@@ -87,7 +87,7 @@ The GenAI Assistant (`/api/v1/genai/query`) operates under strict permission bou
 ## 4. Separation-of-Duties (SoD) Rules
 
 ### 4.1 Mandatory Rules (Strictly Enforced by Backend)
-- **SoD-1 (Production vs. Quality Release):** A `SUPERVISOR` who creates a production batch CANNOT authorize that same batch for `RELEASE`. Only a `QUALITY_MANAGER` can execute release decisions.
+- **SoD-1 (Production vs. Quality Release):** A `SUPERVISOR` who creates a production batch CANNOT authorize that same batch for official `RELEASE` or make official batch decisions (`POST /batches/{id}/decisions`). Only a `QUALITY_MANAGER` can execute official batch decisions. Operational containment holds (`POST /batches/{id}/hold`) may be initiated by shop-floor inspectors or supervisors to immediately prevent non-conforming goods movement.
 - **SoD-2 (Remediation vs. Verification):** The user assigned to perform a physical corrective action (e.g., grinding or weld repair) CANNOT perform the subsequent verification `reinspection` on that same item. A qualified `INSPECTOR` or `QUALITY_MANAGER` must verify the fix.
 - **SoD-3 (Audit Trail Immutability):** No user, regardless of role (including system administrators), is permitted to edit or delete rows in `audit_log` or `images`.
 
