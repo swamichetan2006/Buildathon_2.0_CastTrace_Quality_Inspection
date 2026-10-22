@@ -15,6 +15,7 @@ from backend.app.models.entities import (
     Reinspection,
     Review,
     User,
+    WorkerHeartbeat,
 )
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "Image",
     "ModelVersion",
     "ModelRun",
+    "WorkerHeartbeat",
     "Review",
     "Defect",
     "CorrectiveAction",

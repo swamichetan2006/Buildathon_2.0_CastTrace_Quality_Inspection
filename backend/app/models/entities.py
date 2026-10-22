@@ -14,6 +14,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Index,
+    text,
 )
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import relationship
@@ -165,6 +167,8 @@ class ModelVersion(Base):
     version_name = Column(String(64), unique=True, nullable=False)
     model_architecture = Column(String(64), nullable=False)
     weights_path = Column(String(512), nullable=False)
+    weights_sha256 = Column(String(64), nullable=True)
+    unfamiliar_guard_sha256 = Column(String(64), nullable=True)
     training_dataset_info = Column(JSON, nullable=False)
     metrics = Column(JSON, nullable=False)
     is_active = Column(Boolean, nullable=False, default=False, index=True)
@@ -175,8 +179,19 @@ class ModelVersion(Base):
 
 class ModelRun(Base):
     __tablename__ = "model_runs"
+    __table_args__ = (
+        Index(
+            "uq_active_model_run",
+            "image_id",
+            "model_version_id",
+            unique=True,
+            sqlite_where=text("status IN ('QUEUED', 'PROCESSING')"),
+            postgresql_where=text("status IN ('QUEUED', 'PROCESSING')"),
+        ),
+    )
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
+    logical_run_id = Column(String(36), nullable=False, default=generate_uuid, index=True)
     image_id = Column(String(36), ForeignKey("images.id"), nullable=False, index=True)
     model_version_id = Column(String(36), ForeignKey("model_versions.id"), nullable=True)
     status = Column(String(32), nullable=False, default="QUEUED")  # QUEUED, PROCESSING, SUCCEEDED, FAILED, CANCELLED
@@ -184,9 +199,16 @@ class ModelRun(Base):
     score = Column(Numeric(6, 5), nullable=True)
     score_type = Column(String(32), nullable=False, default="PROBABILITY_DEFECTIVE")
     threshold_applied = Column(Numeric(6, 5), nullable=False, default=0.50000)
+    routing_outcome = Column(String(32), nullable=True)  # LIKELY_OK, NEEDS_REVIEW, LIKELY_DEFECTIVE
+    routing_reason = Column(Text, nullable=True)
     processing_latency_ms = Column(Integer, nullable=True)
     attempt_number = Column(Integer, nullable=False, default=1)
     parent_run_id = Column(String(36), ForeignKey("model_runs.id"), nullable=True)
+    claimed_by_worker_id = Column(String(64), nullable=True)
+    lease_expires_at = Column(DateTime(timezone=True), nullable=True)
+    next_retry_at = Column(DateTime(timezone=True), nullable=True)
+    error_code = Column(String(64), nullable=True)
+    is_retryable = Column(Boolean, nullable=True, default=True)
     error_details = Column(JSON, nullable=True)
     executed_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
@@ -196,6 +218,23 @@ class ModelRun(Base):
     model_version = relationship("ModelVersion", back_populates="model_runs")
     parent_run = relationship("ModelRun", remote_side=[id], foreign_keys=[parent_run_id])
     reviews = relationship("Review", back_populates="model_run")
+
+
+class WorkerHeartbeat(Base):
+    __tablename__ = "worker_heartbeats"
+
+    worker_id = Column(String(64), primary_key=True)
+    status = Column(String(32), nullable=False, default="STARTING")  # STARTING, READY, OFFLINE, BUSY
+    started_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
+    last_heartbeat_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
+    model_version_id = Column(String(36), ForeignKey("model_versions.id"), nullable=True)
+    model_ready = Column(Boolean, nullable=False, default=False)
+    last_error_code = Column(String(64), nullable=True)
+    details = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now, onupdate=get_utc_now)
+
+    model_version = relationship("ModelVersion", foreign_keys=[model_version_id])
 
 
 class Review(Base):

@@ -1,10 +1,17 @@
+# ==========================================
 # Environment & Local Secrets
+# ==========================================
 .env
+.env.*
 .env.local
 .env.*.local
 *.env
+!.env.example
+secrets/
 
+# ==========================================
 # Python & Virtual Environments
+# ==========================================
 .venv/
 venv/
 ENV/
@@ -13,27 +20,42 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.pytest_cache/
-.coverage
-htmlcov/
-dist/
-build/
 *.egg-info/
 
-# Database & SQLite files
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+htmlcov/
+coverage/
+
+# Generated build output
+build/
+dist/
+
+# ==========================================
+# Database & Local Backups
+# ==========================================
 *.db
 *.sqlite
 *.sqlite3
-casttrace.db
-casttrace_test.db
+backups/
+backend/backups/
 
-# Storage & Uploaded Evidence (Immutable originals kept locally)
+# ==========================================
+# Uploaded Evidence & Local Storage
+# Preserve source code; exclude local uploads.
+# ==========================================
 storage/
 uploads/
 evidence/
 backend/storage/
 
-# Node & Frontend
+# ==========================================
+# Node.js & Frontend
+# ==========================================
 node_modules/
 frontend/node_modules/
 frontend/dist/
@@ -43,18 +65,49 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Machine Learning Checkpoints & Raw Datasets
+# ==========================================
+# Raw Datasets & Generated Local Data
+# ==========================================
+/data/
+/datasets/
+/ml/data/
+
+# ==========================================
+# ML Weights & Checkpoints
+# ==========================================
 *.pt
 *.pth
 *.onnx
-*.bin
-checkpoints/
-data/
-datasets/
-ml/checkpoints/
-ml/data/
+/ml/artifacts/*.bin
+/checkpoints/
+/ml/checkpoints/
 
-# IDE & OS Files
+# ==========================================
+# Private / Dataset-Derived ML Artifacts
+# Keep dataset-specific manifests and reference
+# data out of normal Git commits.
+# ==========================================
+/ml/artifacts/unfamiliar_guard_reference.json
+/ml/artifacts/split_manifest.json
+/ml/artifacts/test_predictions_manifest.json
+/ml/artifacts/test_predictions_manifest.csv
+/ml/artifacts/dataset_audit.json
+/ml/artifacts/embedding_similarity_audit.json
+/ml/artifacts/routing_uncertainty_analysis.json
+
+# The following remain eligible for Git tracking:
+# ml/artifacts/model_metadata.json
+# ml/artifacts/test_evaluation_report.json
+#
+# The documentation image docs/assets/confusion_matrix.png
+# remains eligible for Git tracking.
+#
+# Avoid tracking the duplicate generated image:
+/ml/artifacts/confusion_matrix.png
+
+# ==========================================
+# IDE & Operating System
+# ==========================================
 .idea/
 .vscode/
 *.swp

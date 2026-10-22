@@ -1,0 +1,313 @@
+{
+  "evaluation_name": "Phase 3A-Final Held-Out Test Evaluation",
+  "timestamp_utc": "2026-10-22T05:15:00Z",
+  "artifact_verification": {
+    "model_best.pt": "ab2b592ab9a4cca3c97613d8e52d9f8abc2906dbef77cddd15c73d2da1c3c2da",
+    "split_manifest.json": "7ab58f05d9055203150ad679d8501950003174eb8e78d4276eb4ea31e78799c7",
+    "unfamiliar_guard_reference.json": "c39905c247cd881175439833661610ce8d0dbff18811057fb289dfb24c464abc"
+  },
+  "sample_counts": {
+    "total_test_images": 197,
+    "actual_good": 79,
+    "actual_defective": 118
+  },
+  "binary_classification_metrics_0_50": {
+    "accuracy": 0.9898,
+    "precision": 0.9833,
+    "recall": 1.0,
+    "f1_score": 0.9916,
+    "roc_auc": 0.9996,
+    "pr_auc": 0.9997,
+    "confusion_matrix": {
+      "true_negative_good": 77,
+      "false_positive_defective": 2,
+      "false_negative_good": 0,
+      "true_positive_defective": 118
+    },
+    "per_class_metrics": {
+      "GOOD": {
+        "precision": 1.0,
+        "recall": 0.9747,
+        "f1_score": 0.9872,
+        "support": 79
+      },
+      "DEFECTIVE": {
+        "precision": 0.9833,
+        "recall": 1.0,
+        "f1_score": 0.9916,
+        "support": 118
+      },
+      "macro_averages": {
+        "macro_precision": 0.9917,
+        "macro_recall": 0.9873,
+        "macro_f1_score": 0.9894,
+        "balanced_accuracy": 0.9873
+      }
+    },
+    "macro_f1": 0.9894,
+    "balanced_accuracy": 0.9873
+  },
+  "ordered_routing_evaluation": {
+    "thresholds": {
+      "t_ok": 0.01,
+      "t_def": 0.5
+    },
+    "counts": {
+      "LIKELY_OK": {
+        "actual_good": 68,
+        "actual_defective": 0,
+        "total": 68
+      },
+      "NEEDS_REVIEW": {
+        "actual_good": 9,
+        "actual_defective": 0,
+        "total": 9,
+        "causes": {
+          "quality_gate": {
+            "GOOD": 0,
+            "DEFECTIVE": 0
+          },
+          "unfamiliar_guard": {
+            "GOOD": 0,
+            "DEFECTIVE": 0
+          },
+          "borderline_score": {
+            "GOOD": 9,
+            "DEFECTIVE": 0
+          }
+        }
+      },
+      "LIKELY_DEFECTIVE": {
+        "actual_good": 2,
+        "actual_defective": 118,
+        "total": 120
+      }
+    },
+    "reconciliation": {
+      "total_routed": 197,
+      "sum_good": 79,
+      "sum_def": 118,
+      "balances_perfectly": true
+    },
+    "metrics": {
+      "automated_routing_coverage": {
+        "value": 0.9543,
+        "numerator": 188,
+        "denominator": 197,
+        "ci_95": [
+          0.9155,
+          0.9758
+        ]
+      },
+      "mandatory_human_review_rate": {
+        "value": 0.0457,
+        "numerator": 9,
+        "denominator": 197,
+        "ci_95": [
+          0.0242,
+          0.0845
+        ]
+      },
+      "defective_miss_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 118,
+        "ci_95": [
+          0.0,
+          0.0315
+        ],
+        "target_met_point": true,
+        "target_met_upper_ci": true
+      },
+      "false_omission_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 68,
+        "ci_95": [
+          0.0,
+          0.0535
+        ]
+      },
+      "defective_precision": {
+        "value": 0.9833,
+        "numerator": 118,
+        "denominator": 120,
+        "ci_95": [
+          0.9413,
+          0.9954
+        ]
+      },
+      "defective_recall": {
+        "value": 1.0,
+        "numerator": 118,
+        "denominator": 118,
+        "ci_95": [
+          0.9685,
+          1.0
+        ]
+      }
+    }
+  },
+  "error_analysis": {
+    "unfamiliar_guard_flags": [],
+    "borderline_score_cases": [
+      {
+        "filename": "cast_ok_0_1780.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_1780.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.0893,
+        "score_defective": 0.02433115430176258,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.02433 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_1963.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_1963.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.08452,
+        "score_defective": 0.018155958503484726,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.01816 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_3064.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_3064.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.10525,
+        "score_defective": 0.09777690470218658,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.09778 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_327.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_327.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.08623,
+        "score_defective": 0.019626231864094734,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.01963 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_4974.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_4974.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.0888,
+        "score_defective": 0.014176343567669392,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.01418 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_5565.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_5565.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.09147,
+        "score_defective": 0.031328681856393814,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.03133 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_6741.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_6741.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.08036,
+        "score_defective": 0.021300727501511574,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.02130 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_7151.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_7151.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.07067,
+        "score_defective": 0.011346310377120972,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.01135 < 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_7609.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_7609.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.10138,
+        "score_defective": 0.041399646550416946,
+        "predicted_binary_class": 0,
+        "routing_outcome": "NEEDS_REVIEW",
+        "routing_reason": "Borderline score (0.01 < P_def 0.04140 < 0.5)"
+      }
+    ],
+    "false_omissions": [],
+    "false_defects": [
+      {
+        "filename": "cast_ok_0_4930.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_4930.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.10678,
+        "score_defective": 0.7238527536392212,
+        "predicted_binary_class": 1,
+        "routing_outcome": "LIKELY_DEFECTIVE",
+        "routing_reason": "Defect detected (P_def 0.72385 >= 0.5)"
+      },
+      {
+        "filename": "cast_ok_0_5148.jpeg",
+        "path": "data/raw/casting/casting_512x512/casting_512x512/ok_front/cast_ok_0_5148.jpeg",
+        "label_idx": 0,
+        "label_name": "GOOD",
+        "quality_passed": true,
+        "quality_reason": null,
+        "is_unfamiliar": false,
+        "guard_distance": 0.11493,
+        "score_defective": 0.6473453044891357,
+        "predicted_binary_class": 1,
+        "routing_outcome": "LIKELY_DEFECTIVE",
+        "routing_reason": "Defect detected (P_def 0.64735 >= 0.5)"
+      }
+    ]
+  }
+}

@@ -1,0 +1,350 @@
+{
+  "model_version": "v1.0.0-resnet18",
+  "model_architecture": "ResNet-18",
+  "dataset_source": "casting_512x512",
+  "dataset_total_images": 1300,
+  "split_manifest_sha256": "7ab58f05d9055203150ad679d8501950003174eb8e78d4276eb4ea31e78799c7",
+  "class_mapping": {
+    "0": "GOOD",
+    "1": "DEFECTIVE"
+  },
+  "input_size": [
+    224,
+    224
+  ],
+  "preprocessing_parameters": {
+    "normalization_mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "normalization_std": [
+      0.229,
+      0.224,
+      0.225
+    ],
+    "interpolation": "bilinear"
+  },
+  "weights_file": "model_best.pt",
+  "weights_sha256": "ab2b592ab9a4cca3c97613d8e52d9f8abc2906dbef77cddd15c73d2da1c3c2da",
+  "guard_reference_file": "unfamiliar_guard_reference.json",
+  "guard_reference_sha256": "c39905c247cd881175439833661610ce8d0dbff18811057fb289dfb24c464abc",
+  "guard_threshold": 0.13709007322788222,
+  "guard_evaluation": {
+    "unrelated_eval_samples": 10,
+    "unrelated_detection_rate": 1.0,
+    "validation_false_flag_rate": 0.010309278350515464,
+    "limitations": "Small synthetic & texture collection tests gross distributional shift; does not guarantee detection of arbitrary unseen industrial cast products."
+  },
+  "routing_thresholds": {
+    "t_ok": 0.46,
+    "t_def": 0.5
+  },
+  "baseline_comparison": {
+    "majority_baseline": {
+      "strategy": "Majority Class Predictor",
+      "predicted_class": "DEFECTIVE",
+      "validation_accuracy": 0.6031,
+      "validation_precision": 0.6031,
+      "validation_recall": 1.0,
+      "validation_f1": 0.7524,
+      "validation_roc_auc": 0.5,
+      "notes": "Always predicts DEFECTIVE; achieves 0% coverage on GOOD items and cannot meet 90% precision."
+    },
+    "model_fine_tuning": {
+      "loss": 0.0304,
+      "accuracy": 0.9845,
+      "precision": 1.0,
+      "recall": 0.9744,
+      "f1_score": 0.987,
+      "roc_auc": 0.9998
+    },
+    "improvement_accuracy": 0.3814,
+    "improvement_precision": 0.3969,
+    "improvement_roc_auc": 0.4998
+  },
+  "validation_metrics": {
+    "loss": 0.0304,
+    "accuracy": 0.9845,
+    "precision": 1.0,
+    "recall": 0.9744,
+    "f1_score": 0.987,
+    "roc_auc": 0.9998
+  },
+  "validation_routing": {
+    "candidate_thresholds": {
+      "t_ok": 0.01,
+      "t_def": 0.5,
+      "status": "Candidate threshold pending held-out test evaluation",
+      "selection_bias_note": "Thresholds were selected on the validation set. Confidence intervals reflect validation sampling uncertainty and do not constitute an operational guarantee."
+    },
+    "ordered_pipeline_stages": [
+      "1. Input image usability and quality gate (resolution, blur, photometric exposure)",
+      "2. Unfamiliar-input guard (512D penultimate feature cosine distance vs training reference)",
+      "3. Binary classifier score evaluated against calibrated routing thresholds",
+      "4. Final image-level routing outcome (LIKELY_OK, NEEDS_REVIEW, LIKELY_DEFECTIVE)"
+    ],
+    "validation_ground_truth": {
+      "total_images": 194,
+      "actual_good": 77,
+      "actual_defective": 117
+    },
+    "ordered_routing_counts": {
+      "LIKELY_OK": {
+        "actual_good": 69,
+        "actual_defective": 0,
+        "total": 69
+      },
+      "NEEDS_REVIEW": {
+        "actual_good": 8,
+        "actual_defective": 3,
+        "total": 11,
+        "subcategories": {
+          "quality_gate_failures": {
+            "GOOD": 0,
+            "DEFECTIVE": 0
+          },
+          "unfamiliar_guard_flags": {
+            "GOOD": 0,
+            "DEFECTIVE": 2
+          },
+          "borderline_score": {
+            "GOOD": 8,
+            "DEFECTIVE": 1
+          }
+        }
+      },
+      "LIKELY_DEFECTIVE": {
+        "actual_good": 0,
+        "actual_defective": 114,
+        "total": 114
+      }
+    },
+    "reconciliation": {
+      "total_routed": 194,
+      "sum_actual_good": 77,
+      "sum_actual_defective": 117,
+      "balances_perfectly": true
+    },
+    "metrics": {
+      "automated_routing_coverage": {
+        "value": 0.9433,
+        "numerator": 183,
+        "denominator": 194,
+        "ci_95": [
+          0.9013,
+          0.968
+        ]
+      },
+      "mandatory_human_review_rate": {
+        "value": 0.0567,
+        "numerator": 11,
+        "denominator": 194,
+        "ci_95": [
+          0.032,
+          0.0987
+        ]
+      },
+      "defective_miss_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 117,
+        "ci_95": [
+          0.0,
+          0.0318
+        ],
+        "target_met_point": true,
+        "target_met_upper_ci": true
+      },
+      "false_omission_rate": {
+        "value": 0.0,
+        "numerator": 0,
+        "denominator": 69,
+        "ci_95": [
+          0.0,
+          0.0527
+        ]
+      },
+      "defective_precision": {
+        "value": 1.0,
+        "numerator": 114,
+        "denominator": 114,
+        "ci_95": [
+          0.9674,
+          1.0
+        ]
+      },
+      "defective_recall": {
+        "value": 0.9744,
+        "numerator": 114,
+        "denominator": 117,
+        "ci_95": [
+          0.9273,
+          0.9912
+        ]
+      }
+    }
+  },
+  "provenance": {
+    "random_seed": 42,
+    "train_epochs": 5,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0002,
+    "timestamp_utc": "2026-10-22T04:36:02Z"
+  },
+  "dataset_licence_review": {
+    "dataset_name": "Real Life Industrial Dataset of Casting Product",
+    "kaggle_url": "https://www.kaggle.com/datasets/ravirajsinh45/real-life-industrial-dataset-of-casting-product",
+    "publisher": "ravirajsinh45 (Ravirajsinh Dabhi)",
+    "original_source": "Pilot plant submersible pump impeller casting inspection",
+    "licence": "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)",
+    "commercial_use": "Prohibited (NonCommercial constraint)",
+    "derivatives": "NoDerivatives constraint applies to distribution of modified material",
+    "redistribution_status": "RESTRICTED. Local research/prototyping artifact only. Do not publish raw dataset or model weights.",
+    "trained_weights_status": "Legal status of neural network weights under CC BY-NC-ND 4.0 is unverified/unresolved. Weights are retained locally as private project artifacts and must not be distributed."
+  },
+  "held_out_test_evaluation": {
+    "status": "COMPLETED_ONE_TIME_EVALUATION",
+    "timestamp_utc": "2026-10-22T05:15:00Z",
+    "sample_size": 197,
+    "actual_good": 79,
+    "actual_defective": 118,
+    "binary_classification": {
+      "accuracy": 0.9898,
+      "precision": 0.9833,
+      "recall": 1.0,
+      "f1_score": 0.9916,
+      "roc_auc": 0.9996,
+      "pr_auc": 0.9997,
+      "confusion_matrix": {
+        "true_negative_good": 77,
+        "false_positive_defective": 2,
+        "false_negative_good": 0,
+        "true_positive_defective": 118
+      },
+      "per_class_metrics": {
+        "GOOD": {
+          "precision": 1.0,
+          "recall": 0.9747,
+          "f1_score": 0.9872,
+          "support": 79
+        },
+        "DEFECTIVE": {
+          "precision": 0.9833,
+          "recall": 1.0,
+          "f1_score": 0.9916,
+          "support": 118
+        },
+        "macro_averages": {
+          "macro_precision": 0.9917,
+          "macro_recall": 0.9873,
+          "macro_f1_score": 0.9894,
+          "balanced_accuracy": 0.9873
+        }
+      },
+      "macro_f1": 0.9894,
+      "balanced_accuracy": 0.9873
+    },
+    "ordered_routing": {
+      "thresholds": {
+        "t_ok": 0.01,
+        "t_def": 0.5
+      },
+      "counts": {
+        "LIKELY_OK": {
+          "actual_good": 68,
+          "actual_defective": 0,
+          "total": 68
+        },
+        "NEEDS_REVIEW": {
+          "actual_good": 9,
+          "actual_defective": 0,
+          "total": 9,
+          "causes": {
+            "quality_gate": {
+              "GOOD": 0,
+              "DEFECTIVE": 0
+            },
+            "unfamiliar_guard": {
+              "GOOD": 0,
+              "DEFECTIVE": 0
+            },
+            "borderline_score": {
+              "GOOD": 9,
+              "DEFECTIVE": 0
+            }
+          }
+        },
+        "LIKELY_DEFECTIVE": {
+          "actual_good": 2,
+          "actual_defective": 118,
+          "total": 120
+        }
+      },
+      "reconciliation": {
+        "total_routed": 197,
+        "sum_good": 79,
+        "sum_def": 118,
+        "balances_perfectly": true
+      },
+      "metrics": {
+        "automated_routing_coverage": {
+          "value": 0.9543,
+          "numerator": 188,
+          "denominator": 197,
+          "ci_95": [
+            0.9155,
+            0.9758
+          ]
+        },
+        "mandatory_human_review_rate": {
+          "value": 0.0457,
+          "numerator": 9,
+          "denominator": 197,
+          "ci_95": [
+            0.0242,
+            0.0845
+          ]
+        },
+        "defective_miss_rate": {
+          "value": 0.0,
+          "numerator": 0,
+          "denominator": 118,
+          "ci_95": [
+            0.0,
+            0.0315
+          ],
+          "target_met_point": true,
+          "target_met_upper_ci": true
+        },
+        "false_omission_rate": {
+          "value": 0.0,
+          "numerator": 0,
+          "denominator": 68,
+          "ci_95": [
+            0.0,
+            0.0535
+          ]
+        },
+        "defective_precision": {
+          "value": 0.9833,
+          "numerator": 118,
+          "denominator": 120,
+          "ci_95": [
+            0.9413,
+            0.9954
+          ]
+        },
+        "defective_recall": {
+          "value": 1.0,
+          "numerator": 118,
+          "denominator": 118,
+          "ci_95": [
+            0.9685,
+            1.0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -20,6 +20,16 @@ from backend.app.schemas.inspections import (
 )
 from backend.app.schemas.images import ImageResponse, ImageSupersedeRequest
 from backend.app.schemas.audit import AuditLogResponse
+from backend.app.schemas.model_runs import (
+    ModelRunResponse,
+    ModelRunEnqueueResponse,
+    ModelRunListResponse,
+    ItemRoutingSummaryResponse,
+)
+from backend.app.schemas.workers import (
+    WorkerStatusResponse,
+    WorkerOperationalStatusResponse,
+)
 
 __all__ = [
     "HealthResponse",

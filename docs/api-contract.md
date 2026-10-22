@@ -266,10 +266,52 @@ Idempotency-Key: <UUIDv4 or client-generated unique string>
   }
   ```
 
+#### `GET /model-runs/{id}`
+- **Purpose:** Retrieve the execution status, score, and routing outcome of a model run.
+- **Role:** All authenticated roles (`INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER`).
+- **Response `200 OK`:** Model run entity with `logical_run_id`, `status`, `routing_outcome`, `predicted_label`, `score`, and latency.
+
+#### `GET /model-runs`
+- **Purpose:** Query and filter model runs with pagination.
+- **Role:** All authenticated roles.
+- **Query Parameters:** `image_id` (optional), `status` (optional), `model_version_id` (optional), `page` (default 1), `limit` (default 50).
+- **Response `200 OK`:** Paginated items list: `{ "items": [...], "total": 12, "page": 1, "limit": 50 }`.
+
 #### `POST /model-runs/{id}/retry`
-- **Purpose:** Trigger retry of a failed model run.
+- **Purpose:** Trigger retry of a failed model run within the 3-attempt budget.
 - **Role:** `INSPECTOR`, `QUALITY_MANAGER`.
 - **Response `201 Created`:** New `model_runs` record with incremented `attempt_number`.
+- **Response `409 Conflict`:** If max retries (3 total attempts) have been exhausted (`MAX_RETRIES_EXCEEDED`).
+
+---
+
+### 2.6 Background Worker Monitoring (`/workers`)
+
+#### `GET /workers/status`
+- **Purpose:** Monitor inference worker heartbeats, operational readiness, and queue status.
+- **Role:** `SUPERVISOR`, `QUALITY_MANAGER` (`INSPECTOR` forbidden with 403).
+- **Response `200 OK`:**
+  ```json
+  {
+    "workers": [
+      {
+        "worker_id": "worker-852bbec5",
+        "status": "READY",
+        "started_at": "2026-10-22T06:36:13.644445Z",
+        "last_heartbeat_at": "2026-10-22T06:36:17.212276Z",
+        "model_version_id": "7810f7f6-7dae-44a8-89dc-d5fc12a5fae5",
+        "model_ready": true,
+        "last_error_code": null,
+        "details": { "hostname": "WORKER-NODE-01" }
+      }
+    ],
+    "queue_summary": {
+      "queued": 0,
+      "processing": 0,
+      "failed": 0
+    }
+  }
+  ```
 
 ---
 
