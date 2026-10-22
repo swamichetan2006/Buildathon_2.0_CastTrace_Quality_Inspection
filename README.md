@@ -2,254 +2,159 @@
 
 **Buildathon 2.0 | Problem Statement 1**
 
-CastTrace AI is a quality assurance and defect tracking system for manufactured cast pump impellers. It connects inspection workflows, machine-learning-based defect prediction, human verification, corrective and preventive action (CAPA) tracking, follow-up reinspection, authorized batch release or containment, operational quality dashboards, and evidence-grounded Generative AI intelligence.
+CastTrace AI is an enterprise-grade AI-assisted product quality inspection, defect tracking, and release governance platform tailored for manufactured cast pump impellers (CF8M Stainless Steel).
 
-The system includes **Recurrence Radar**, an innovation designed to help identify recurring quality problems using historical defect and corrective-action information.
+The platform links physical shop-floor inspection with deep learning defect inference, human-in-the-loop review, defect recurrence lineage (**Recurrence Radar**), Corrective and Preventive Actions (CAPA) with strict Four-Eyes verification, independent reinspection, authorized batch release gates with immutable decision snapshots, and comprehensive audit logging.
 
-Machine predictions remain separate from human decisions. Official batch release and containment decisions require authorized human action.
-
----
-
-## 1. Technical Stack
-
-### Backend
-
-* FastAPI
-* Python
-* Pydantic v2
-* SQLAlchemy 2.0
-* Alembic database migrations
-* SQLite for local development
-* PostgreSQL-compatible database architecture
-
-### Frontend
-
-* React
-* TypeScript
-* Vite
-* Tailwind CSS
-* TanStack Query
-
-### Machine Learning
-
-* PyTorch
-* ResNet-18 transfer-learning classifier
-* Binary classification: `GOOD` and `DEFECTIVE`
-* Three-tier image routing: `LIKELY_OK`, `NEEDS_REVIEW`, and `LIKELY_DEFECTIVE`
-* Image-quality validation and unfamiliar-input detection
-
-### Security and Integrity
-
-* Role-based access control (RBAC)
-* Password hashing
-* Idempotency protection
-* Audit logging
-* Immutable original image evidence
-* SHA-256 evidence integrity verification
-* Database-backed inference jobs
-* Worker heartbeats, retry handling, and stale-lease recovery
-
-### User Roles
-
-* Inspector
-* Supervisor
-* Quality Manager
+> **Governance Principle:** AI predictions assist human inspectors and triage evidence, but **never** independently release, hold, or scrap a production batch. Official batch release and containment decisions require explicit, authorized human Quality Manager action.
 
 ---
 
-## 2. Repository Structure
+## 1. Primary Application Workflows
 
-```text
-Buildathon_2.0/
-├── .env.example
-├── .gitignore
-├── alembic.ini
-├── pytest.ini
-├── README.md
-│
-├── docs/
-│   ├── erd.md
-│   ├── state-machines.md
-│   ├── permissions.md
-│   ├── metrics.md
-│   ├── api-contract.md
-│   ├── traceability.md
-│   ├── demo-script.md
-│   ├── ml-evaluation.md
-│   ├── model-card.md
-│   └── assets/
-│       └── confusion_matrix.png
-│
-├── backend/
-│   ├── alembic/
-│   │   └── versions/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   ├── models/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   ├── main.py
-│   │   └── worker.py
-│   ├── scripts/
-│   │   └── seed.py
-│   ├── tests/
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── postcss.config.js
-│
-├── ml/
-│   ├── casttrace_ml/
-│   │   ├── __init__.py
-│   │   ├── model.py
-│   │   ├── preprocessing.py
-│   │   ├── quality_gate.py
-│   │   ├── routing.py
-│   │   └── unfamiliar_input.py
-│   ├── artifacts/
-│   │   ├── model_metadata.json
-│   │   └── test_evaluation_report.json
-│   ├── README.md
-│   ├── pyproject.toml
-│   └── train.py
-│
-└── scripts/
-    ├── audit_cross_resolution.py
-    ├── audit_embedding_similarity.py
-    ├── backup_database.py
-    ├── create_split_manifest.py
-    ├── evaluate_held_out_test.py
-    ├── generate_phase3a_deliverables.py
-    ├── recalculate_validation_routing.py
-    ├── register_model_version.py
-    └── verify_phase3b_migration.py
+CastTrace AI governs the end-to-end quality lifecycle through six tightly coordinated workflows:
+
+```
+[Shop Floor Inspection]
+       │  (Inspector creates draft, registers physical items, uploads photos)
+       ▼
+[Photographic Evidence & SHA-256 Hashing]
+       │  (Magic bytes, size check, hash calculated, path confinement enforced)
+       ▼
+[Detached ML Inference Worker]
+       │  (ResNet-18 pipeline, quality gate, unfamiliar-input guard, 3-tier routing)
+       ▼
+[Human Review & Disagreement Tracking]
+       │  (Inspector reviews item; AI prediction snapshot frozen; defects logged)
+       ▼
+[CAPA & Four-Eyes Reinspection]
+       │  (Remediation assigned; implementer ≠ verifier; reinspection resolves defect)
+       ▼
+[Batch Release Gates & Immutable Decision Snapshot]
+       │  (Quality Manager evaluates 8 automated gates; signs release with snapshot)
+       ▼
+[Operational Dashboards & Audit Trail]
 ```
 
-Generated files, local databases, raw datasets, environment secrets, and restricted model artifacts are excluded from Git according to `.gitignore`.
+* **Workflow A — Authentication & Role-Based Access Control (RBAC):** Three operational personas (`INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER`) enforced through server-side JWT authentication with least-privilege scoping.
+* **Workflow B — Batch & Product Management:** Traceability from SKU/alloy specification to batch serialization, declared quantities, and operational containment holds (`ON_HOLD`).
+* **Workflow C — Inspection & Multi-Photo Evidence:** Sampling-plan-driven inspections (`AQL_LEVEL_II`), physical item registration, and multi-photo uploads without item-count inflation. Every image is cryptographically anchored via SHA-256 hashing.
+* **Workflow D — Detached ResNet-18 Defect Inference:** Background worker claims queued jobs with atomic leases, applies image quality checks, detects out-of-distribution/unfamiliar castings, and applies calibrated routing (`LIKELY_OK`, `NEEDS_REVIEW`, `LIKELY_DEFECTIVE`).
+* **Workflow E — Controlled Defects, CAPA & Four-Eyes Reinspection:** Categorized defect logging, root-cause remediation tracking, strict separation of duties (implementer cannot approve own verification), and mandatory reinspection.
+* **Workflow F — Release Governance & Immutable Snapshots:** 8-rule automated release gate engine preventing release of uninspected, unreviewed, or defect-tainted batches. Release creates an immutable audit snapshot.
 
 ---
 
-## 3. Prerequisites
+## 2. Technical Architecture & Process Separation
 
-Install the following software before setting up the project:
+CastTrace AI strictly decouples the web API layer from the machine learning inference workload:
 
-* Git
-* Python 3.10 or later, subject to compatibility with the pinned dependencies
-* Node.js 18 or later
-* npm 9 or later
+* **API Backend (FastAPI):** Light-weight, async HTTP service on port `8001`. Serves REST endpoints, validates schemas via Pydantic v2, enforces RBAC, writes audit trails, and enqueues inference jobs in SQLite. **The API process never loads PyTorch weights into memory.**
+* **Inference Worker (`worker.py`):** Detached background daemon. Polls SQLite for queued jobs, acquires 45-second atomic leases, verifies file hash integrity, executes ResNet-18 forward pass on GPU/CPU, and commits results.
+* **Frontend SPA (React + Vite + Tailwind CSS):** Modern single-page application on port `5173`. Proxies API traffic via Vite development server, maintains JWT authentication state, and provides real-time quality triage views.
+* **Database (SQLite with WAL mode):** Zero-configuration local relational database. Configured with Write-Ahead Logging (`PRAGMA journal_mode=WAL`) and `busy_timeout=5000` for concurrent read/write transactions. Fully compatible with PostgreSQL.
 
-Python 3.14 was used in the development environment.
-
-Verify your installations:
-
-```powershell
-git --version
-python --version
-node --version
-npm --version
-```
+For architectural specifications, see:
+* [Entity Relationship Diagram](docs/erd.md)
+* [Lifecycle State Machines](docs/state-machines.md)
+* [Permissions & RBAC Matrix](docs/permissions.md)
+* [API Contract & Schema](docs/api-contract.md)
+* [Quality Metrics & Gates](docs/metrics.md)
+* [Traceability & Lineage](docs/traceability.md)
+* [ML Evaluation & Thresholds](docs/ml-evaluation.md)
 
 ---
 
-## 4. Clone the Repository
+## 3. Software Prerequisites
 
-Open PowerShell and navigate to the directory where you want to store the project.
+Ensure the following tools are installed on your host machine:
 
-```powershell
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd Buildathon_2.0
-```
-
-Replace `<YOUR_GITHUB_REPOSITORY_URL>` with the actual GitHub repository URL.
-
-If the repository directory has a different name, enter that directory instead.
+| Component | Minimum Version | Development Baseline | Check Command |
+| :--- | :--- | :--- | :--- |
+| **Operating System** | Windows 10/11, macOS, Linux | Windows 11 (x64) | `cmd /c ver` |
+| **Python** | 3.10+ | Python 3.14.6 | `python --version` |
+| **Node.js** | 18.0.0+ | Node.js 20.x | `node --version` |
+| **npm** | 9.0.0+ | npm 10.x | `npm --version` |
+| **Git** | 2.30+ | Git 2.45+ | `git --version` |
 
 ---
 
-## 5. Configure Environment Variables
+## 4. Local Environment Configuration
 
-Create your local environment file from the committed template:
+Copy the tracked configuration template to create your local `.env` file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Review `.env` and update the settings for your local environment as required.
+### Key Configuration Variables
 
-**Important:** Never commit `.env` or other files containing passwords, API keys, or secrets. Commit `.env.example` with placeholder values instead.
+| Variable | Default Value | Purpose |
+| :--- | :--- | :--- |
+| `APP_ENV` | `development` | Environment mode (`development`, `staging`, `production`). In `production`, strict security checks fail-safe on weak secrets. |
+| `APP_DEBUG` | `true` | Detailed debug error reporting. Replaced with sanitized errors in production. |
+| `HOST` | `127.0.0.1` | Local network binding interface. |
+| `PORT` | `8001` | Backend HTTP API port. |
+| `SECRET_KEY` | *(dev placeholder)* | HMAC-SHA256 signing secret for JWTs. Must be ≥32 characters and cryptographically random in production. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `480` | Session lifetime (480 min = 8 hours shift). |
+| `DATABASE_URL` | `sqlite:///./casttrace.db` | Local SQLite database file location. |
+| `STORAGE_DIR` | `./storage/evidence` | Dedicated evidence repository for uploaded inspection photos. |
+| `MAX_UPLOAD_SIZE_BYTES` | `10485760` | 10 MB maximum upload limit per image file. |
+| `ML_ARTIFACTS_DIR` | `ml/artifacts` | Directory containing trained weights and guard vectors. |
+| `WORKER_POLL_INTERVAL` | `1.0` | Background worker queue polling interval (seconds). |
+| `BACKEND_CORS_ORIGINS` | `["http://localhost:5173", ...]` | Explicit CORS allowed origins. Wildcards (`*`) are rejected. |
+
+> **Security Rule:** Never commit `.env` to Git. The `.gitignore` file strictly excludes `.env`, `*.db`, `storage/`, and `backups/`.
 
 ---
 
-## 6. Backend Setup
+## 5. Step-by-Step Setup Sequence
 
-Run these commands from the project root:
+Follow this sequence to set up a clean clone of CastTrace AI on a new computer.
+
+### Step 5.1: Create Python Virtual Environment & Install Dependencies
+
+From the repository root:
 
 ```powershell
 python -m venv .venv
-```
-
-Activate the virtual environment:
-
-```powershell
 .\.venv\Scripts\Activate.ps1
-```
-
-Install the backend dependencies:
-
-```powershell
 python -m pip install --upgrade pip
 pip install -r backend\requirements.txt
-```
-
-Install the ML package and its declared dependencies:
-
-```powershell
 pip install -e .\ml
 ```
 
-The editable installation makes the local `casttrace_ml` package available to the Python environment.
+*Note: The `-e .\ml` command installs the local `casttrace_ml` package in editable mode.*
 
-If PowerShell blocks virtual-environment activation, use the environment's executables directly, as shown in the commands throughout this README.
+### Step 5.2: Apply SQLite Database Migrations
 
----
-
-## 7. Initialize the Database
-
-Apply all available Alembic migrations:
+Apply the complete Alembic migration sequence (head revision `6eae03ca7c6e`):
 
 ```powershell
 .\.venv\Scripts\alembic.exe upgrade head
 ```
 
-This creates or updates the database schema using the repository's migration history.
+This constructs all 18 relational tables including indexes, unique constraints, foreign keys, and the `audit_log` ledger.
 
-The project includes migrations for the core application and the ML model-run and worker infrastructure.
+### Step 5.3: Seed Demo Operational Accounts
 
-### Seed Demo Accounts
-
-Run the seed script:
+Run the idempotent seed script to populate test accounts:
 
 ```powershell
 .\.venv\Scripts\python.exe backend\scripts\seed.py
 ```
 
-The seed script is designed to be idempotent, so it can be run again without creating duplicate seed accounts.
+#### Demo Credentials Reference
 
-The demo accounts and their credentials are listed in the **Seed Accounts Reference** section below. These credentials are for local development and demonstrations only. Change them before using the application in any shared or production environment.
+| Username | Role | Default Password | Description |
+| :--- | :--- | :--- | :--- |
+| `inspector_chen` | `INSPECTOR` | `Password123!` | Shop-floor inspection, photo evidence upload, initial review |
+| `supervisor_torres`| `SUPERVISOR`| `Password123!` | Batch creation, containment holds, CAPA assignment |
+| `qm_reynolds` | `QUALITY_MANAGER`| `Password123!` | Gate evaluation, official release, Four-Eyes CAPA verification |
 
----
+*(Note: Change all credentials before deploying outside local development).*
 
-## 8. Frontend Setup
-
-From the project root, install the frontend dependencies:
+### Step 5.4: Install Frontend Dependencies
 
 ```powershell
 Push-Location frontend
@@ -257,215 +162,238 @@ npm install
 Pop-Location
 ```
 
-The frontend development server uses port `5173` and proxies API requests to the backend on port `8001`.
-
 ---
 
-## 9. Run the Application
+## 6. Running the Application
 
-Open separate PowerShell terminals from the project root.
+CastTrace AI consists of three concurrent processes during local development. You can launch them in separate terminals or use the unified PowerShell CLI.
 
-### Terminal 1 — Start the FastAPI Backend
+### Option A: Using the `scripts/dev.ps1` Helper CLI
 
-Ensure the virtual environment is available, then run:
+We provide a convenient PowerShell developer script that handles environment activation and commands:
 
+```powershell
+# Open 3 terminals:
+# Terminal 1:
+.\scripts\dev.ps1 backend
+
+# Terminal 2:
+.\scripts\dev.ps1 worker
+
+# Terminal 3:
+.\scripts\dev.ps1 frontend
+
+# In a 4th terminal, check service status:
+.\scripts\dev.ps1 status
+```
+
+### Option B: Manual Process Startup
+
+#### Terminal 1 — FastAPI Backend (Port 8001)
 ```powershell
 .\.venv\Scripts\uvicorn.exe backend.app.main:app --host 127.0.0.1 --port 8001 --reload
 ```
 
-Available endpoints:
-
-| Resource                      | Address                                     |
-| ----------------------------- | ------------------------------------------- |
-| API base                      | http://127.0.0.1:8001                       |
-| Interactive API documentation | http://127.0.0.1:8001/docs                  |
-| Health check                  | http://127.0.0.1:8001/health                |
-| Worker status                 | http://127.0.0.1:8001/api/v1/workers/status |
-
-Worker status is restricted to authorized roles.
-
-### Terminal 2 — Start the AI Inference Worker
-
-Run:
-
+#### Terminal 2 — Detached ML Inference Worker
 ```powershell
-.\.venv\Scripts\python.exe backend\app\worker.py
+.\.venv\Scripts\python.exe backend\app\worker.py --poll-interval 1.0
 ```
 
-The worker processes queued inference jobs independently from the FastAPI application.
-
-Available options:
-
-| Option                      | Purpose                                         |
-| --------------------------- | ----------------------------------------------- |
-| `--once`                    | Process currently eligible queued jobs and exit |
-| `--poll-interval <seconds>` | Configure the polling interval                  |
-| `--inject-failure`          | Inject a controlled development-only failure    |
-| `--target-run-id <uuid>`    | Target a particular run for failure injection   |
-
-The default polling interval is one second.
-
-**ML artifact requirement:** The inference worker requires the trained model weights and unfamiliar-input reference described in the ML Artifact Availability section. These files are not included in the repository. The worker cannot perform real inference until the required artifacts are obtained or generated locally and their hashes match the model metadata.
-
-### Terminal 3 — Start the React Frontend
-
-Run:
-
+#### Terminal 3 — Vite Frontend Dev Server (Port 5173)
 ```powershell
-Push-Location frontend
+cd frontend
 npm run dev
 ```
 
-Open the following address in your browser:
+### Active Local Endpoints
 
-**http://127.0.0.1:5173**
+* **Frontend SPA:** [http://localhost:5173](http://localhost:5173)
+* **Backend API Base:** [http://127.0.0.1:8001](http://127.0.0.1:8001)
+* **Interactive OpenAPI Docs (Swagger):** [http://127.0.0.1:8001/docs](http://127.0.0.1:8001/docs)
+* **System Health Probe:** [http://127.0.0.1:8001/health](http://127.0.0.1:8001/health)
+* **Worker Operational Status:** [http://127.0.0.1:8001/api/v1/workers/status](http://127.0.0.1:8001/api/v1/workers/status) *(QM / Supervisor)*
 
-Keep this terminal open while using the application. To return to the project root after stopping the frontend, run:
+---
+
+## 7. Machine Learning Artifact Prerequisites & Reproducibility
+
+The application integrates a ResNet-18 deep learning model trained on industrial cast impeller imagery. In compliance with security best practices and dataset licensing (CC BY-NC-ND 4.0), **large binary weights are excluded from Git**.
+
+### Required ML Artifacts
+
+The inference worker requires the following local files under `ml/artifacts/`:
+
+| Artifact Path | Purpose | Mandatory? | Integrity Check |
+| :--- | :--- | :--- | :--- |
+| `ml/artifacts/model_metadata.json` | Architecture metadata, frozen thresholds, expected SHA-256 hashes | **Yes** (Tracked in Git) | JSON schema validation |
+| `ml/artifacts/model_best.pt` | PyTorch ResNet-18 state dictionary weights | **Yes** for real inference | SHA-256 hash match against metadata |
+| `ml/artifacts/unfamiliar_guard_reference.json` | Reference embedding centroid and distance threshold for OOD guard | **Yes** for real inference | SHA-256 hash match against metadata |
+
+### Preflight Diagnostics & Safe Degraded Mode
+
+The backend API and ML worker incorporate preflight artifact validation:
+
+1. **API Server Independence:** The FastAPI server boots normally even if ML weights are absent. Non-ML features (inspections, batches, CAPAs, manual reviews, release gates) remain 100% operational.
+2. **Worker Safe Failure:** If `model_best.pt` is missing when an image is processed, the worker logs an actionable error and records the run as `FAILED` with code `MODEL_ARTIFACTS_UNAVAILABLE`. **It never fabricates mock predictions.**
+3. **Health Diagnostics:** Calling `GET /health` reports full artifact readiness:
+   ```json
+   {
+     "status": "healthy",
+     "database": "connected",
+     "details": {
+       "ml_artifacts": {
+         "metadata_present": true,
+         "weights_present": true,
+         "weights_sha256_match": true,
+         "guard_present": true,
+         "guard_sha256_match": true,
+         "is_inference_ready": true
+       }
+     }
+   }
+   ```
+
+### Obtaining or Training Model Weights
+
+To train or reproduce the weights locally from the raw impeller dataset:
+```powershell
+.\.venv\Scripts\python.exe ml/train.py --epochs 15 --batch-size 32
+.\.venv\Scripts\python.exe scripts/register_model_version.py
+```
+
+---
+
+## 8. Automated Testing & Verification Suite
+
+CastTrace AI includes automated unit tests, security tests, and live end-to-end integration verification.
+
+### 8.1 Backend Test Suite (Pytest)
+
+Run all 82 automated backend tests across models, services, RBAC, release gates, and security hardening:
 
 ```powershell
-Pop-Location
+.\.venv\Scripts\pytest.exe backend/tests -v
+```
+
+*(All tests execute against an isolated temporary database `casttrace_test.db` and clean up automatically).*
+
+### 8.2 Clean-Clone Reproducibility Verification
+
+To verify that the application configuration, Alembic migrations, database seeding, artifact diagnostics, and API connectivity can run completely from scratch:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_clean_setup.py
+```
+
+*This script spins up an isolated temporary SQLite database, runs all migrations, seeds test users, checks ML integrity, and performs live API probes (14/14 checks).*
+
+### 8.3 Live Application Integration Verification (Phase 5D)
+
+With backend, worker, and frontend running, execute the 32-step live integration verification suite:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/verify_phase5d_live.py
+```
+
+### 8.4 Frontend Build and Linting
+
+```powershell
+cd frontend
+npm run build   # Validates TypeScript compilation and bundles static assets
+npm run lint    # Runs Oxlint across all TypeScript and React components
+cd ..
 ```
 
 ---
 
-## 10. Machine Learning and Inference Architecture
+## 9. SQLite Backup, Restoration & Migration Safety
 
-### 10.1 Process Separation
+CastTrace AI includes robust, non-destructive database backup and recovery utilities utilizing the official SQLite Online Backup API.
 
-The FastAPI process handles application APIs, authorization, and inference-job creation. The detached worker process owns model loading and model execution.
+### 9.1 Creating a Database Backup
 
-The API process does not instantiate the PyTorch inference model.
+Run the backup utility to create a timestamped, WAL-consistent backup file:
 
-### 10.2 Inference Pipeline
-
-The inference pipeline applies the following stages:
-
-1. **Evidence integrity verification:** Recalculates the SHA-256 hash of the stored image and compares it with the recorded hash.
-2. **Image-quality gate:** Rejects unusable or invalid images before model execution.
-3. **Unfamiliar-input detection:** Compares image features with the saved reference distribution.
-4. **Binary classification:** The ResNet-18 model produces a score for the `DEFECTIVE` class.
-5. **Routing:** Uses the frozen score thresholds to direct the image to a triage outcome.
-
-### 10.3 Routing Thresholds
-
-The current inference implementation uses these thresholds:
-
-| Condition                   | Routing outcome    |
-| --------------------------- | ------------------ |
-| Score ≤ `0.01`              | `LIKELY_OK`        |
-| Score ≥ `0.50`              | `LIKELY_DEFECTIVE` |
-| Score > `0.01` and < `0.50` | `NEEDS_REVIEW`     |
-
-Failed quality checks and unfamiliar inputs are routed to human review instead of being treated as automatically acceptable.
-
-The classifier's score represents its model output on a scale from zero to one; it should not be interpreted as a guarantee of calibrated real-world probability.
-
-**Machine predictions do not automatically release or contain a production batch.** Authorized human decisions remain required.
-
-### 10.4 Model Artifact Availability
-
-The repository intentionally excludes the raw dataset, trained model weights, and private dataset-related artifacts.
-
-Real inference requires the appropriate local artifacts, including:
-
-```text
-ml/artifacts/
-├── model_best.pt
-├── model_metadata.json
-└── unfamiliar_guard_reference.json
+```powershell
+.\.venv\Scripts\python.exe scripts/backup_database.py
 ```
 
-The model metadata records the expected artifact hashes. The inference service verifies the required files before loading the model.
+* Output location: `backups/casttrace_backup_YYYYMMDD_HHMMSS.db`
+* Safety: Uses `source_conn.backup(dest_conn)` which safely locks pages without interrupting live readers.
+* Verification: Automatically runs `PRAGMA integrity_check` and confirms all 15 core tables exist before reporting success.
 
-To make real inference operational on a fresh clone:
+### 9.2 Verifying a Backup File (Non-Destructive)
 
-1. Obtain or generate the trained model weights and unfamiliar-input reference through an approved process.
-2. Place them at the expected paths under `ml/artifacts/`.
-3. Verify that the actual SHA-256 hashes match the values in `model_metadata.json`.
-4. Register the model version using the project's model-registration script.
-5. Start the inference worker and verify its readiness.
+Check whether a backup file is structurally valid without modifying the active database:
 
-The raw casting dataset is not included in Git. The project's model metadata records its source and a CC BY-NC-ND 4.0 licence. The redistribution status of the trained weights has not been resolved; do not publish the dataset or model weights without confirming that redistribution is permitted.
+```powershell
+.\.venv\Scripts\python.exe scripts/restore_database.py --backup backups/<backup_file>.db --check-only
+```
 
-**A successful code clone alone does not provide the excluded model files.** Until those artifacts are provisioned, real ML inference is not ready, even though the rest of the application source code is available.
+### 9.3 Restoring from a Backup
 
----
+To restore a verified backup:
 
-## 11. Worker Reliability and Recovery
+```powershell
+# 1. Gracefully stop backend and worker processes (Ctrl+C in their terminals)
+# 2. Execute restoration:
+.\.venv\Scripts\python.exe scripts/restore_database.py --backup backups/<backup_file>.db
+```
 
-The inference worker includes safeguards designed to support reliable asynchronous execution.
-
-### Atomic Job Claiming
-
-Database-backed conditional updates prevent multiple workers from successfully claiming the same eligible inference job.
-
-### Idempotency
-
-Inference requests support idempotency protection to reduce duplicate work from repeated requests.
-
-### Retry Policy
-
-A logical inference request has a maximum of three attempts:
-
-* Attempt 1: Initial execution
-* Attempt 2: Retry after a five-second backoff
-* Attempt 3: Final retry after a thirty-second backoff
-
-No fourth attempt is permitted.
-
-### Lease Recovery
-
-A worker acquires a 45-second lease on a claimed job. An expired lease triggers recovery and rescheduling when the attempt budget allows it.
-
-### Worker Heartbeat
-
-Worker heartbeats are updated every ten seconds. A worker without a heartbeat for more than thirty seconds is reported as offline.
-
-### Evidence Integrity
-
-If the original image bytes no longer match the recorded SHA-256 hash, inference is stopped and the run fails with `EVIDENCE_INTEGRITY_MISMATCH`. This integrity failure is non-retryable.
+**Restoration Safeguards:**
+1. Pre-flight verification of backup file integrity.
+2. Creates an automatic pre-restore safety copy (`casttrace.db.pre_restore_YYYYMMDD_HHMMSS.bak`).
+3. Performs atomic restoration using SQLite backup API.
+4. Verifies restored database integrity and Alembic migration version (`6eae03ca7c6e`).
 
 ---
 
-## 12. Multi-Image Inspection Aggregation
+## 10. Development vs. Production Configuration
 
-Item-level routing is derived from the latest applicable inference results across active, non-superseded images.
+| Parameter | Development Mode (`APP_ENV=development`) | Production Mode (`APP_ENV=production`) |
+| :--- | :--- | :--- |
+| **`APP_DEBUG`** | `true` (Full exception stack traces in logs) | **`false`** (Sanitized error responses, no traceback leaks) |
+| **`SECRET_KEY`** | Default dev key permitted with startup warning | **Enforced:** Must be random, ≥32 chars, cannot contain "dev" or "insecure" |
+| **CORS Origins** | `localhost:5173`, `localhost:3000` | Explicit production FQDN (e.g. `https://quality.company.com`). Wildcards rejected. |
+| **Static Serving** | Vite dev proxy with HMR | Static bundle built via `npm run build`, served by Nginx / Caddy |
+| **Database Engine** | SQLite WAL mode (`casttrace.db`) | SQLite on persistent volume (or managed PostgreSQL) |
+| **Worker Execution**| Terminal script | Systemd service or supervised container daemon |
 
-* If any active image is `LIKELY_DEFECTIVE`, the item is derived as `LIKELY_DEFECTIVE`.
-* If any applicable image needs review, has failed, or is still processing, the item is derived as `NEEDS_REVIEW`, unless a defective image already determines the outcome.
-* An item is derived as `LIKELY_OK` only when all required active images are `LIKELY_OK`.
-* Superseded images are excluded from the active aggregation.
+### Generating a Production Secret Key
 
-This derived view does not replace the official human inspection decision or authorized batch release/containment process.
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
 
 ---
 
-## 13. Controlled Failure Injection Demo
+## 11. Production Deployment Guidelines
 
-This demonstration exercises worker failure handling without deliberately corrupting model weights.
+When deploying CastTrace AI outside local development:
 
-**Prerequisite:** The application database must be migrated and the inference worker must have the required model artifacts configured.
+1. **Reverse Proxy (Nginx / Caddy / Cloudflare):**
+   * Terminate TLS (HTTPS) externally.
+   * Route `/api/` and `/health` to FastAPI on port `8001`.
+   * Route `/` to static frontend files built via `npm run build` (`frontend/dist`).
+   * Never expose the backend port `8001` or worker directly to the public Internet.
+2. **Persistent Storage:**
+   * Ensure `casttrace.db` and `storage/evidence/` reside on persistent, backed-up block storage volumes.
+   * Restrict OS permissions on `storage/evidence/` to the application runtime user.
+3. **Worker Supervision:**
+   * Supervise `worker.py` using `systemd`, `supervisor`, or a container orchestrator with automatic restart policies.
+   * Ensure only one active worker instance runs per SQLite database to prevent lock contention.
 
-1. Create an eligible inference request using an authorized Inspector or Quality Manager account:
+---
 
-   ```text
-   POST /api/v1/images/{id}/infer
-   ```
+## 12. Known Setup Limitations
 
-2. Run the worker with controlled failure injection:
+* **SQLite Concurrency:** SQLite WAL mode allows multiple concurrent readers and one writer. For high-throughput factory lines with >50 concurrent inspectors, migration to PostgreSQL is recommended.
+* **Worker Process:** The inference worker must run continuously in the background for automated AI triage. If the worker is offline, inspections remain in `QUEUED` state until the worker is restarted.
+* **Model Artifacts:** Real defect inference requires local provisioning of `ml/artifacts/model_best.pt` due to licensing boundaries.
 
-   ```powershell
-   .\.venv\Scripts\python.exe backend\app\worker.py --once --inject-failure
-   ```
+---
 
-3. Verify that the injected attempt is recorded as failed with the error code `DEMO_INJECTED_FAILURE`.
+## 13. License & Attribution
 
-4. Verify that the retry is scheduled according to the retry policy.
-
-5. Resume normal processing:
-
-   ```powershell
-   .\.venv\Scripts\python.exe backend\app\worker.py --once
-   ```
-
-6. Verify the final run state and confirm that the original attempt remains in
+* CastTrace AI Core Platform: MIT License
+* Impeller Casting Dataset: Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)

@@ -24,6 +24,8 @@ def get_health(response: Response, db: Session = Depends(get_db)) -> HealthRespo
     try:
         db.execute(text("SELECT 1"))
         latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
+        from backend.app.services.inference_service import InferenceService
+        ml_status = InferenceService().check_artifacts_status()
         return HealthResponse(
             status="healthy",
             app_name=settings.APP_NAME,
@@ -32,7 +34,11 @@ def get_health(response: Response, db: Session = Depends(get_db)) -> HealthRespo
             database="connected",
             database_latency_ms=latency_ms,
             timestamp=now_utc,
-            details={"sqlite_compatible": True, "dialect": db.bind.dialect.name if db.bind else "unknown"},
+            details={
+                "sqlite_compatible": True,
+                "dialect": db.bind.dialect.name if db.bind else "unknown",
+                "ml_artifacts": ml_status,
+            },
         )
     except Exception as exc:
         latency_ms = round((time.perf_counter() - start_time) * 1000, 2)

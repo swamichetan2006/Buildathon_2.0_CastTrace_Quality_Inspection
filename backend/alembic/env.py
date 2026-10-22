@@ -14,8 +14,9 @@ import backend.app.models  # noqa: F401 - Register all models with Base.metadata
 
 config = context.config
 
-# Overwrite sqlalchemy.url with dynamic settings from backend.app.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Overwrite sqlalchemy.url with dynamic settings or ALEMBIC_DATABASE_URL override
+db_url = os.environ.get("ALEMBIC_DATABASE_URL") or config.get_main_option("sqlalchemy.url") or settings.DATABASE_URL
+config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -43,7 +44,7 @@ def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
     if configuration is None:
         configuration = {}
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = db_url
 
     connectable = engine_from_config(
         configuration,

@@ -92,6 +92,75 @@ class InferenceService:
 
         return True, None
 
+    def check_artifacts_status(self) -> Dict[str, Any]:
+        """Examines local ML artifact availability and SHA-256 integrity without loading weights into memory."""
+        metadata_exists = os.path.exists(self.metadata_path)
+        metadata_valid = False
+        weights_exists = False
+        weights_sha_match = False
+        guard_exists = False
+        guard_sha_match = False
+        error_msg = None
+
+        if not metadata_exists:
+            return {
+                "metadata_present": False,
+                "weights_present": False,
+                "weights_sha256_match": False,
+                "guard_present": False,
+                "guard_sha256_match": False,
+                "is_inference_ready": False,
+                "reason": f"Model metadata not found at {self.metadata_path}",
+            }
+
+        try:
+            with open(self.metadata_path, "r") as f:
+                meta = json.load(f)
+            metadata_valid = True
+            weights_file = meta.get("weights_file", "model_best.pt")
+            weights_path = os.path.join("ml", "artifacts", weights_file)
+            expected_weights_sha = meta.get("weights_sha256")
+
+            if os.path.exists(weights_path):
+                weights_exists = True
+                if expected_weights_sha:
+                    weights_sha_match = (self._get_sha256(weights_path) == expected_weights_sha)
+
+            guard_file = meta.get("guard_reference_file", "unfamiliar_guard_reference.json")
+            guard_path = os.path.join("ml", "artifacts", guard_file)
+            expected_guard_sha = meta.get("guard_reference_sha256")
+
+            if os.path.exists(guard_path):
+                guard_exists = True
+                if expected_guard_sha:
+                    guard_sha_match = (self._get_sha256(guard_path) == expected_guard_sha)
+
+            is_ready = metadata_valid and weights_exists and weights_sha_match and guard_exists and guard_sha_match
+            if not is_ready:
+                missing = []
+                if not weights_exists:
+                    missing.append(f"weights file '{weights_file}' missing")
+                elif not weights_sha_match:
+                    missing.append("weights SHA-256 mismatch")
+                if not guard_exists:
+                    missing.append(f"guard reference '{guard_file}' missing")
+                elif not guard_sha_match:
+                    missing.append("guard reference SHA-256 mismatch")
+                error_msg = "; ".join(missing)
+        except Exception as e:
+            is_ready = False
+            error_msg = f"Failed to inspect artifacts: {str(e)}"
+
+        return {
+            "metadata_present": metadata_exists and metadata_valid,
+            "weights_present": weights_exists,
+            "weights_sha256_match": weights_sha_match,
+            "guard_present": guard_exists,
+            "guard_sha256_match": guard_sha_match,
+            "is_inference_ready": is_ready,
+            "reason": error_msg,
+        }
+
     def load_model(self):
         """Load PyTorch architecture, weights, and unfamiliar-input reference."""
         if self.custom_predictor is not None:
@@ -175,7 +244,18 @@ class InferenceService:
             return self.custom_predictor(image_bytes, raw_img)
 
         if not self.is_loaded:
-            self.load_model()
+            try:
+                self.load_model()
+            except Exception as e:
+                latency = int((time.perf_counter() - start_time) * 1000)
+                return InferenceResult(
+                    status="FAILED",
+                    error_code="MODEL_ARTIFACTS_UNAVAILABLE",
+                    error_details={"error": f"ML model artifacts unavailable or failed verification: {str(e)}"},
+                    processing_latency_ms=latency,
+                    model_version_name=version_name,
+                    model_architecture=arch_name,
+                )
 
         # Lazy imports of quality gate
         from casttrace_ml.quality_gate import check_image_quality

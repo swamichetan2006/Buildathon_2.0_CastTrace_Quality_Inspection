@@ -1,6 +1,8 @@
 import os
 import sys
+from typing import Optional
 import bcrypt
+from sqlalchemy.orm import Session
 
 # Ensure root workspace is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
@@ -40,8 +42,10 @@ DEMO_USERS = [
 ]
 
 
-def seed_database() -> None:
-    db = SessionLocal()
+def seed_database(db: Optional[Session] = None) -> None:
+    session_provided = db is not None
+    if not session_provided:
+        db = SessionLocal()
     try:
         created_count = 0
         updated_count = 0
@@ -79,7 +83,8 @@ def seed_database() -> None:
         print(f"Error during seeding: {exc}", file=sys.stderr)
         raise exc
     finally:
-        db.close()
+        if not session_provided:
+            db.close()
 
 
 if __name__ == "__main__":

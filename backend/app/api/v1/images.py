@@ -128,7 +128,17 @@ async def upload_image(
     stored_filename = f"{image_uuid}{ext}"
     full_path = os.path.join(settings.STORAGE_DIR, stored_filename)
 
-    with open(full_path, "wb") as f:
+    # Path traversal protection: Guarantee full_path is confined strictly inside STORAGE_DIR
+    abs_storage_dir = os.path.abspath(settings.STORAGE_DIR)
+    abs_full_path = os.path.abspath(full_path)
+    if os.path.commonpath([abs_full_path, abs_storage_dir]) != abs_storage_dir:
+        raise AppException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="INVALID_DESTINATION_PATH",
+            message="Resolved destination path escapes the configured evidence storage directory.",
+        )
+
+    with open(abs_full_path, "wb") as f:
         f.write(contents)
 
     image_record = Image(
@@ -219,7 +229,17 @@ def get_image_content(
             message=f"Evidence image with ID '{image_id}' was not found.",
         )
 
-    if not os.path.exists(image.storage_path):
+    # Path traversal protection: Ensure storage_path resides within configured STORAGE_DIR
+    abs_storage_dir = os.path.abspath(settings.STORAGE_DIR)
+    abs_file_path = os.path.abspath(image.storage_path)
+    if os.path.commonpath([abs_file_path, abs_storage_dir]) != abs_storage_dir:
+        raise AppException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            code="ACCESS_DENIED",
+            message="Evidence path security violation: Path escapes the authorized evidence storage repository.",
+        )
+
+    if not os.path.exists(abs_file_path):
         raise AppException(
             status_code=status.HTTP_404_NOT_FOUND,
             code="FILE_MISSING",
@@ -227,7 +247,7 @@ def get_image_content(
         )
 
     return FileResponse(
-        path=image.storage_path,
+        path=abs_file_path,
         media_type=image.mime_type,
         filename=image.original_filename,
         headers={"Cache-Control": "private, max-age=86400"},
