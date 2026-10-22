@@ -31,6 +31,26 @@ from backend.app.schemas.workers import (
     WorkerOperationalStatusResponse,
 )
 
+from backend.app.schemas.reviews import (
+    ReviewDecision,
+    ReviewCreate,
+    ReviewDisputeRequest,
+    ReviewAdjudicateRequest,
+    ReviewResponse,
+    ReviewListResponse,
+)
+from backend.app.schemas.defects import (
+    DefectCategory,
+    DefectSeverity,
+    DefectStatus,
+    DefectCreate,
+    DefectUpdate,
+    DefectResolveRequest,
+    DefectReopenRequest,
+    DefectResponse,
+    DefectListResponse,
+)
+
 __all__ = [
     "HealthResponse",
     "LoginRequest",
@@ -52,4 +72,19 @@ __all__ = [
     "ImageResponse",
     "ImageSupersedeRequest",
     "AuditLogResponse",
+    "ReviewDecision",
+    "ReviewCreate",
+    "ReviewDisputeRequest",
+    "ReviewAdjudicateRequest",
+    "ReviewResponse",
+    "ReviewListResponse",
+    "DefectCategory",
+    "DefectSeverity",
+    "DefectStatus",
+    "DefectCreate",
+    "DefectUpdate",
+    "DefectResolveRequest",
+    "DefectReopenRequest",
+    "DefectResponse",
+    "DefectListResponse",
 ]

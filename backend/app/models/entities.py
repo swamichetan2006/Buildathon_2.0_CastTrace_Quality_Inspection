@@ -251,6 +251,7 @@ class Review(Base):
     decision = Column(String(32), nullable=False)  # CONFIRMED_GOOD, CONFIRMED_DEFECTIVE, DISPUTED, REQUEST_ADDITIONAL_EVIDENCE
     model_disagreement = Column(Boolean, nullable=False, default=False)
     notes = Column(Text, nullable=True)
+    ai_snapshot = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
 
     inspection = relationship("Inspection", back_populates="reviews")
@@ -273,12 +274,18 @@ class Defect(Base):
     surface_location = Column(String(64), nullable=True)
     description = Column(Text, nullable=False)
     evidence_image_id = Column(String(36), ForeignKey("images.id"), nullable=True)
+    resolved_by = Column(String(36), ForeignKey("users.id"), nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    resolution_notes = Column(Text, nullable=True)
+    prior_defect_id = Column(String(36), ForeignKey("defects.id"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now, onupdate=get_utc_now)
 
     inspection_item = relationship("InspectionItem", back_populates="defects")
     review = relationship("Review", back_populates="defects")
     evidence_image = relationship("Image", foreign_keys=[evidence_image_id])
+    resolver = relationship("User", foreign_keys=[resolved_by])
+    prior_defect = relationship("Defect", remote_side=[id], foreign_keys=[prior_defect_id])
     corrective_actions = relationship("CorrectiveAction", back_populates="defect")
     reinspections = relationship("Reinspection", back_populates="defect")
 
