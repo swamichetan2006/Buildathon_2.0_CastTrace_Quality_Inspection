@@ -251,3 +251,35 @@ $$\text{Verified-Fix Rate} = \frac{\text{Count of reinspections resulting in } \
   FROM reinspections;
   ```
 - **Edge Cases:** If `total_reinspected_count == 0`, returns `INSUFFICIENT_DATA`.
+
+---
+
+## 3. Batch Decision Snapshot Metrics & Immutability Specifications
+
+### 3.1 Distinct Physical Item Counting Axioms
+In compliance with Problem Statement 1 and manufacturing quality standards:
+1. **Unit of Measure:** Physical casting parts (`inspection_items`) are the sole unit of manufacturing quality. Photographic evidence images (`images`) are evidentiary attachments and must never be counted as physical parts.
+2. **Anti-Inflation Rule:** An impeller with 3 photographs (e.g., suction eye, hub bore, and shroud rim) increments `total_items` by **one**, `inspected_items` by **one**, and `reviewed_items` by **one**.
+3. **Join Deduplication:** All count aggregates use `COUNT(DISTINCT ...)` over the primary key of the respective entity to avoid inflation from many-to-many or multi-image joins.
+
+### 3.2 Decision Snapshot Field Definitions
+Every finalized batch decision records an immutable snapshot containing:
+
+| Field Name | Type | Mathematical / SQL Definition | Business Interpretation |
+| :--- | :---: | :--- | :--- |
+| `total_items` | `int` | `COUNT(DISTINCT ii.id)` across all batch inspections | Total distinct physical impeller castings registered in the batch inspections. |
+| `inspected_items` | `int` | `COUNT(DISTINCT ii.id)` with $\ge 1$ non-superseded image | Physical impellers with photographic evidence captured. |
+| `reviewed_items` | `int` | `COUNT(DISTINCT ii.id)` with $\ge 1$ human review recorded | Physical impellers that have completed human review sign-off. |
+| `pending_inspection_items` | `int` | `total_items - inspected_items` | Registered parts awaiting evidence photo capture. |
+| `pending_review_items` | `int` | `total_items - reviewed_items` | Registered parts awaiting human inspector review. |
+| `unresolved_defects` | `int` | `COUNT(DISTINCT d.id)` with status $\in \{\text{OPEN}, \text{ACTION\_ASSIGNED}, \text{IN\_PROGRESS}, \text{PENDING\_REINSPECTION}, \text{REOPENED}\}$ | Active defects preventing standard release. |
+| `resolved_defects` | `int` | `COUNT(DISTINCT d.id)` with status $\text{RESOLVED}$ | Defects successfully remediated and verified through reinspection. |
+| `defects_requiring_reinspection`| `int` | `COUNT(DISTINCT d.id)` with status $\text{PENDING\_REINSPECTION}$ | Defects with completed CAPA awaiting follow-up inspection. |
+| `capa_requiring_verification` | `int` | `COUNT(DISTINCT ca.id)` with `verification_status = 'PENDING'` | Corrective actions completed by technician awaiting independent QM verification. |
+| `capa_verified` | `int` | `COUNT(DISTINCT ca.id)` with `verification_status = 'VERIFIED'` | Corrective actions independently approved by Quality Manager. |
+| `pending_or_failed_reinspections`| `int` | `COUNT(DISTINCT r.id)` with `outcome = 'DEFECT_RECURRED_REOPENED'` | Reinspections that failed to clear the non-conformance. |
+
+### 3.3 Snapshot Immutability Guarantee
+- **Point-in-Time Persistence:** The decision snapshot is serialized and stored as a static JSON document in `batch_decisions.snapshot` within the same database transaction that finalizes the decision.
+- **Historical Freeze:** Subsequent additions of evidence, new inspections, defect logs on other lots, or product specification revisions **never** mutate historical decision snapshots.
+- **Auditable Recalculation vs. Historical Record:** While the live `/release-gate` endpoint evaluates the dynamic database state in real-time, querying `/batches/{id}/decisions` always returns the frozen state as it existed at the exact second the Quality Manager authorized the decision.

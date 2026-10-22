@@ -41,6 +41,7 @@ The demonstration assumes three pre-seeded accounts:
 | **13** | **Inspect Comprehensive Audit & History**<br>`GET /api/v1/audit-logs?entity_id=<batch_id>` | `QUALITY_MANAGER` | Unchanged (Read query). | UI timeline renders immutable chronicle: Batch creation $\rightarrow$ Image upload $\rightarrow$ ML inference $\rightarrow$ Human review $\rightarrow$ Defect $\rightarrow$ CAPA $\rightarrow$ Reinspection. |
 | **14** | **Review Dashboard & Recurrence Radar**<br>`GET /api/v1/metrics/dashboard?batch_id=<batch_id>`<br>`GET /api/v1/metrics/recurrence-radar?product_id=<prod_id>` | All Roles | Executes deterministic SQL aggregation across distinct physical items. | Dashboard KPI cards update: Verified-Fix Rate = 100%, Open Actions = 0. Recurrence Radar plots cluster frequency. |
 | **15** | **Grounded GenAI Batch Quality Summary**<br>`POST /api/v1/genai/query`<br>`{"prompt": "Summarize batch LOT-202610-098 quality status and state whether it is safe to release.", "target_batch_id": "<batch_id>"}` | `QUALITY_MANAGER` | LLM context builder retrieves batch, defect, CAPA, and reinspection records. Logs query in `genai_queries`. | Status `200 OK`. Grounded response provides complete factual summary with clickable source IDs (`[DEF-20261021-0001]`). Includes disclaimer that final release requires human QM sign-off. |
+| **16** | **Release-Gate Evaluation & Official Batch Release**<br>`GET /api/v1/batches/{id}/release-gate`<br>`POST /api/v1/batches/{id}/decisions`<br>`{"decision": "RELEASE", "reason": "All 50 physical items clear; defect DEF-20261021-0001 verified resolved via follow-up reinspection."}` | `QUALITY_MANAGER` | Validates 6 release-gate domains. Updates `batches.status = RELEASED`. Creates immutable `batch_decisions` row with full JSON `snapshot`. Logs audit: `BATCH_RELEASED`. | Status `201 Created`. UI displays green **BATCH RELEASED** banner with immutable decision snapshot badge, timestamp, and signed QM authority. |
 
 ---
 
@@ -86,6 +87,14 @@ The demonstration assumes three pre-seeded accounts:
 - **Scenario:** After grinding rework, reinspection reveals residual crack indication.
 - **Inspector Action:** Inspector submits reinspection with `outcome: "DEFECT_RECURRED_REOPENED"`.
 - **Expected Outcome:** Defect state transitions from `PENDING_REINSPECTION` to `REOPENED`. System requires supervisor to assign a new CAPA remediation plan.
+
+### 3.10 Exception E10: Release Blocked by Unresolved Gate Conditions
+- **Scenario:** Quality Manager requests batch release while an item review is disputed, an inference run is still processing, or a defect is unresolved.
+- **Expected Outcome:** Backend rejects request with HTTP `422 Unprocessable Entity` and returns a structured list of blockers (e.g. `UNRESOLVED_DEFECT`, `PENDING_HUMAN_REVIEW`). The batch remains in `PENDING` or `ON_HOLD` with zero false decision records created.
+
+### 3.11 Exception E11: Stale State / Check-Then-Act Concurrency Collision
+- **Scenario:** A Quality Manager checks the release gate and approves release, but a concurrent shop-floor event reopens a defect or places the batch on hold before the release transaction commits.
+- **Expected Outcome:** In-transaction atomic verification detects the state collision and rejects the request with HTTP `409 Conflict`. No stale release decision or corrupted snapshot is persisted.
 
 ---
 

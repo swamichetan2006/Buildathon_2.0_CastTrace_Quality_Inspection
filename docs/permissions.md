@@ -34,6 +34,8 @@ Legend:
 | **Batches** | View Batch Details & History | ALLOW | ALLOW | ALLOW | API (`GET /batches`) |
 | | Create New Production Batch | DENY | ALLOW | ALLOW | API (`POST /batches`) |
 | | Edit Batch Metadata (e.g., Heat #) | DENY | OWN / COND | ALLOW | API (`PATCH /batches/{id}`) |
+| | View Release-Gate Evaluation | ALLOW | ALLOW | ALLOW | API (`GET /batches/{id}/release-gate`) |
+| | View Batch Decision History | ALLOW | ALLOW | ALLOW | API (`GET /batches/{id}/decisions`) |
 | | Operational Containment `HOLD` | ALLOW | ALLOW | ALLOW | API (`POST /batches/{id}/hold`) |
 | | Official Batch Decision (`RELEASE`, `HOLD`, `SCRAP`, `CONCESSION`) | **DENY** | **DENY** | **ALLOW** | API (`POST /batches/{id}/decisions`) |
 

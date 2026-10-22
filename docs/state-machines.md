@@ -204,20 +204,28 @@ stateDiagram-v2
      - **`REJECT_SCRAP`:** Optional terminal outcome for severe, unrecoverable casting lots where remediation is economically or metallurgically unfeasible.
      - **`CONCESSION_DEVIATION`:** Optional specialized outcome for controlled engineering releases under a formal customer or engineering concession permit.
 
-### 7.3 Release Policy Regarding Open Defects
+### 7.3 Release Policy Regarding Open Defects & Release Gates
 
-- **Documented Quality Policy:** An open defect does not silently or permanently paralyze a batch. Rather:
-  - *Standard Release:* Under default manufacturing policy, batches with unresolved defects cannot be given a routine standard release without explanation.
-  - *Authorized Concession Release:* If an open non-critical defect remains (e.g. minor cosmetic roughness within allowable deviation), the **Quality Manager remains solely responsible and empowered** to authorize release by providing an explicit documented engineering concession and justification.
+- **Documented Quality Policy:** An open defect or unverified quality state strictly prevents routine batch release.
+  - *Standard Release Gate:* Evaluates the current batch state across 6 mandatory verification domains:
+    1. **Inspection Completeness:** Requires all batch inspections to be in terminal completed states (`COMPLETED`) and all distinct physical items to have reached eligible terminal quality states (`CLEAR` or resolved).
+    2. **Evidence & Inference:** Validates that evidence images exist, SHA-256 hashes are verifiable, and no required model runs are queued, processing, or failed.
+    3. **Human Review & Disputes:** Confirms that 100% of physical items have completed human reviews without pending disputes (`DISPUTED`) or outstanding evidence requests (`REQUEST_ADDITIONAL_EVIDENCE`).
+    4. **Defect Management:** Confirms no open, action-assigned, in-progress, or reopened defects exist for the batch.
+    5. **CAPA & Reinspection:** Confirms all corrective actions are `VERIFIED` by an independent verifier and follow-up reinspection confirms `DEFECT_RESOLVED`.
+    6. **State & Authorization:** Confirms batch is in a non-terminal state (`PENDING` or `ON_HOLD`), decision maker has `QUALITY_MANAGER` role, and atomic conditional update succeeds.
+  - *Authorized Concession Release:* If an open non-critical defect remains (e.g. minor cosmetic roughness within allowable drawing tolerance), the **Quality Manager remains solely empowered** to authorize release by setting `is_concession: true` and providing an explicit documented engineering justification (`concession_justification`).
+  - *Concurrency Protection:* Release gates are re-evaluated within the database transaction using atomic conditional state checks (`status == prev_status`), returning HTTP `409 Conflict` if concurrent modifications or stale evaluations occur.
+  - *Decision Snapshot Immutability:* Every finalized decision (`RELEASE` or `HOLD`) persists a frozen JSON snapshot capturing exact item counts, quality metrics, active blocker codes, and entity identifiers at decision time. Later database modifications never mutate historical decision snapshots.
 
 ### 7.4 Transition Table
 
 | Previous State | New State | Action / Decision Class | Permitted Role | Required Input / Trigger | Validation & Policy Rules | Expected Audit Event | Error Behavior |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | *None* | `PENDING` | System | System | Batch creation | - | `BATCH_INITIALIZED` | - |
-| `PENDING`, `RELEASED` | `ON_HOLD` | **Operational Containment Hold** | `INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER` | Containment reason | Immediate operational hold on shop floor (`POST /batches/{id}/hold`). Reason must be recorded. Batch immediately blocked from shipping. | `BATCH_HELD` | `422 Unprocessable Entity` if reason missing; `401 Unauthorized` if unauthenticated. |
-| `PENDING`, `ON_HOLD` | `RELEASED` | **Official Batch Decision** | `QUALITY_MANAGER` | Formal justification (+ optional concession text if open defects exist) | Authorized only by Quality Manager (`POST /batches/{id}/decisions`). If open defects exist, requires documented concession justification (`concession_justification`); otherwise requires zero open defects. | `BATCH_RELEASED` | `403 Forbidden` if Inspector/Supervisor; `422 Unprocessable Entity` ("Open defects require documented concession justification"). |
-| `PENDING`, `RELEASED` | `ON_HOLD` | **Official Batch Decision** | `QUALITY_MANAGER` | Containment reason | Authorized only by Quality Manager via `POST /batches/{id}/decisions`. Recorded in `batch_decisions`. | `BATCH_DECISION_RECORDED` | `403 Forbidden` if Inspector/Supervisor; `422 Unprocessable Entity` if reason missing. |
+| `PENDING`, `RELEASED` | `ON_HOLD` | **Operational Containment Hold** | `INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER` | Containment reason | Immediate operational hold on shop floor (`POST /batches/{id}/hold`). Reason must be recorded. Batch immediately blocked from shipping. Captures hold decision snapshot. | `BATCH_HELD` | `422 Unprocessable Entity` if reason missing; `401 Unauthorized` if unauthenticated. |
+| `PENDING`, `ON_HOLD` | `RELEASED` | **Official Batch Decision** | `QUALITY_MANAGER` | Formal justification (+ optional concession text if open defects exist) | Evaluates release gates in transaction (`POST /batches/{id}/decisions`). If blockers exist, requires `is_concession: true` and `concession_justification`. Persists immutable snapshot and updates batch to `RELEASED`. | `BATCH_RELEASED` | `403 Forbidden` if Inspector/Supervisor; `422 Unprocessable Entity` if blockers present; `409 Conflict` on concurrent state change. |
+| `PENDING`, `RELEASED` | `ON_HOLD` | **Official Batch Decision** | `QUALITY_MANAGER` | Containment reason | Authorized only by Quality Manager via `POST /batches/{id}/decisions`. Recorded in `batch_decisions` with snapshot. | `BATCH_DECISION_RECORDED` | `403 Forbidden` if Inspector/Supervisor; `422 Unprocessable Entity` if reason missing; `409 Conflict` on concurrent change. |
 | `ON_HOLD` | `REJECT_SCRAP` | *Official Decision (Extension)* | `QUALITY_MANAGER` | Scrap authorization | Authorized only by Quality Manager. Critical non-conformance documented. All open actions closed as scrap. | `BATCH_SCRAPPED` | `403 Forbidden` if not Quality Manager. |
 | `ON_HOLD` | `CONCESSION_DEVIATION`| *Official Decision (Extension)* | `QUALITY_MANAGER` | Concession permit number + engineering sign-off | Authorized only by Quality Manager. Formal engineering concession permit recorded. | `BATCH_RELEASED_WITH_CONCESSION`| `403 Forbidden` if not Quality Manager; `422 Unprocessable Entity` if permit missing. |
 

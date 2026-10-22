@@ -8,6 +8,9 @@ from backend.app.schemas.batches import (
     BatchResponse,
     BatchDecisionCreate,
     BatchDecisionResponse,
+    BatchDecisionListResponse,
+    ReleaseBlocker,
+    ReleaseGateResponse,
 )
 
 from backend.app.schemas.inspections import (

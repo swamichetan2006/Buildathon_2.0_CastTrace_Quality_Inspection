@@ -428,6 +428,7 @@ def dispute_review(
         created_at=now_utc,
     )
     db.add(dispute_rev)
+    db.flush()
     item.status = "DISPUTED"
 
     log_audit_event(

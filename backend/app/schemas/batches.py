@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -45,6 +45,23 @@ class BatchDecisionCreate(BaseModel):
     conditions: Optional[str] = Field(None, description="Conditional release terms")
 
 
+class ReleaseBlocker(BaseModel):
+    code: str = Field(..., description="Machine-readable blocker identifier")
+    message: str = Field(..., description="Human-readable explanation")
+    entity_type: Optional[str] = Field(None, description="Related entity table name if applicable")
+    entity_id: Optional[str] = Field(None, description="Related entity UUID if applicable")
+
+
+class ReleaseGateResponse(BaseModel):
+    batch_id: str
+    batch_status: str
+    is_permitted: bool
+    summary: str
+    blockers: list[ReleaseBlocker]
+    counts: dict[str, Any]
+    evaluated_at: datetime
+
+
 class BatchDecisionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -53,7 +70,12 @@ class BatchDecisionResponse(BaseModel):
     decision: str
     reason: str
     decided_by: str
-    conditions: Optional[str]
+    conditions: Optional[str] = None
+    snapshot: Optional[dict[str, Any]] = None
     created_at: datetime
 
 
+class BatchDecisionListResponse(BaseModel):
+    items: list[BatchDecisionResponse]
+    total: int
+    batch_id: str

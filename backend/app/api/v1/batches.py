@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, Query, Request, status
 from sqlalchemy.orm import Session
@@ -12,12 +12,17 @@ from backend.app.schemas.batches import (
     BatchCreate,
     BatchDecisionCreate,
     BatchDecisionResponse,
+    BatchDecisionListResponse,
     BatchHoldRequest,
     BatchResponse,
     BatchUpdate,
+    ReleaseGateResponse,
 )
-
 from backend.app.services.audit import log_audit_event
+from backend.app.services.release_gate_service import (
+    evaluate_batch_release_gate,
+    execute_batch_decision,
+)
 
 router = APIRouter(prefix="/batches", tags=["Batches"])
 
@@ -217,41 +222,82 @@ def place_batch_hold(
     current_user: User = Depends(require_roles(["INSPECTOR", "SUPERVISOR", "QUALITY_MANAGER"])),
     db: Session = Depends(get_db),
 ) -> BatchResponse:
-    batch = db.query(Batch).filter(Batch.id == batch_id).first()
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+
+    execute_batch_decision(
+        db=db,
+        batch_id=batch_id,
+        decision="HOLD",
+        reason=payload.reason,
+        current_user=current_user,
+        client_ip=client_ip,
+        user_agent=user_agent,
+        audit_action="BATCH_HELD",
+    )
+    batch = db.get(Batch, batch_id)
+    return BatchResponse.model_validate(batch)
+
+
+@router.get(
+    "/{batch_id}/release-gate",
+    response_model=ReleaseGateResponse,
+    summary="Evaluate Batch Release Gates",
+    description="Evaluates all quality, inspection, review, inference, defect, CAPA, and reinspection gates for a batch.",
+)
+def get_batch_release_gate(
+    batch_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> ReleaseGateResponse:
+    batch = db.get(Batch, batch_id)
     if not batch:
         raise AppException(
             status_code=status.HTTP_404_NOT_FOUND,
             code="BATCH_NOT_FOUND",
             message=f"Batch with ID '{batch_id}' was not found.",
         )
-
-    prev_status = batch.status
-    batch.status = "ON_HOLD"
-
-    decision_record = BatchDecision(
+    is_permitted, summary, blockers, counts, _ = evaluate_batch_release_gate(db=db, batch_id=batch_id)
+    return ReleaseGateResponse(
         batch_id=batch_id,
-        decision="HOLD",
-        reason=payload.reason,
-        decided_by=current_user.id,
+        batch_status=batch.status,
+        is_permitted=is_permitted,
+        summary=summary,
+        blockers=blockers,
+        counts=counts,
+        evaluated_at=datetime.now(timezone.utc),
     )
-    db.add(decision_record)
 
-    client_ip = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
-    log_audit_event(
-        db=db,
-        actor_id=current_user.id,
-        action="BATCH_HELD",
-        entity_type="batches",
-        entity_id=batch.id,
-        previous_state={"status": prev_status},
-        new_state={"status": "ON_HOLD", "reason": payload.reason},
-        ip_address=client_ip,
-        user_agent=user_agent,
+
+@router.get(
+    "/{batch_id}/decisions",
+    response_model=BatchDecisionListResponse,
+    summary="List Batch Decision History",
+    description="Retrieves the immutable decision ledger and snapshots for a batch.",
+)
+def list_batch_decisions(
+    batch_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> BatchDecisionListResponse:
+    batch = db.get(Batch, batch_id)
+    if not batch:
+        raise AppException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="BATCH_NOT_FOUND",
+            message=f"Batch with ID '{batch_id}' was not found.",
+        )
+    decisions = (
+        db.query(BatchDecision)
+        .filter(BatchDecision.batch_id == batch_id)
+        .order_by(BatchDecision.created_at.desc())
+        .all()
     )
-    db.commit()
-    db.refresh(batch)
-    return BatchResponse.model_validate(batch)
+    return BatchDecisionListResponse(
+        items=[BatchDecisionResponse.model_validate(d) for d in decisions],
+        total=len(decisions),
+        batch_id=batch_id,
+    )
 
 
 @router.post(
@@ -279,80 +325,21 @@ def create_batch_decision(
     if cached:
         return BatchDecisionResponse.model_validate(cached[1])
 
-    batch = db.query(Batch).filter(Batch.id == batch_id).first()
-    if not batch:
-        raise AppException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            code="BATCH_NOT_FOUND",
-            message=f"Batch with ID '{batch_id}' was not found.",
-        )
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
 
-    valid_decisions = ["RELEASE", "HOLD", "REJECT_SCRAP", "CONCESSION_DEVIATION"]
-    if payload.decision not in valid_decisions:
-        raise AppException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            code="INVALID_DECISION",
-            message=f"decision must be one of: {valid_decisions}",
-        )
-
-    # If RELEASE: verify open defects policy
-    if payload.decision == "RELEASE":
-        open_defects_count = (
-            db.query(Defect)
-            .join(InspectionItem, Defect.inspection_item_id == InspectionItem.id)
-            .join(Inspection, InspectionItem.inspection_id == Inspection.id)
-            .filter(
-                Inspection.batch_id == batch_id,
-                Defect.status.in_(["OPEN", "ACTION_ASSIGNED", "IN_PROGRESS", "PENDING_REINSPECTION"]),
-            )
-            .count()
-        )
-        if open_defects_count > 0 and not (payload.is_concession and payload.concession_justification):
-            raise AppException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                code="OPEN_DEFECTS_REQUIRE_CONCESSION",
-                message="Cannot release batch with open defects without an explicit Quality Manager concession justification.",
-                details={"open_defects_count": open_defects_count},
-            )
-
-    prev_status = batch.status
-    if payload.decision in ["RELEASE", "CONCESSION_DEVIATION"]:
-        batch.status = "RELEASED"
-    elif payload.decision == "HOLD":
-        batch.status = "ON_HOLD"
-    elif payload.decision == "REJECT_SCRAP":
-        batch.status = "SCRAPPED"
-
-    conditions = payload.conditions
-    if payload.is_concession and payload.concession_justification:
-        concession_note = f"Concession: {payload.concession_justification}"
-        conditions = f"{conditions}; {concession_note}" if conditions else concession_note
-
-    decision_record = BatchDecision(
+    decision_record = execute_batch_decision(
+        db=db,
         batch_id=batch_id,
         decision=payload.decision,
         reason=payload.reason,
-        decided_by=current_user.id,
-        conditions=conditions,
-    )
-    db.add(decision_record)
-    db.flush()
-
-    client_ip = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
-    log_audit_event(
-        db=db,
-        actor_id=current_user.id,
-        action="BATCH_DECISION_RECORDED",
-        entity_type="batch_decisions",
-        entity_id=decision_record.id,
-        previous_state={"batch_status": prev_status},
-        new_state={"decision": payload.decision, "batch_status": batch.status, "reason": payload.reason},
-        ip_address=client_ip,
+        current_user=current_user,
+        is_concession=payload.is_concession,
+        concession_justification=payload.concession_justification,
+        conditions=payload.conditions,
+        client_ip=client_ip,
         user_agent=user_agent,
     )
-    db.commit()
-    db.refresh(decision_record)
 
     resp_data = BatchDecisionResponse.model_validate(decision_record)
     record_idempotency_result(

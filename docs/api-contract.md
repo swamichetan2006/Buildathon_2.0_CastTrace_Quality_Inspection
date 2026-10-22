@@ -173,6 +173,99 @@ Idempotency-Key: <UUIDv4 or client-generated unique string>
 - **Response `200 OK`:** Updated batch object with `status: "ON_HOLD"`.
 
 
+#### `GET /batches/{id}/release-gate`
+- **Purpose:** Evaluate the live release-gate criteria for a batch without committing a decision. Identifies all blockers across inspection, inference, review, defect, CAPA, and reinspection workflows.
+- **Role:** `INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER`.
+- **Response `200 OK`:**
+  ```json
+  {
+    "batch_id": "batch-9812-45e",
+    "batch_number": "LOT-202610-098",
+    "status": "PENDING",
+    "is_permitted": false,
+    "blockers": [
+      {
+        "code": "UNRESOLVED_DEFECT",
+        "category": "DEFECT",
+        "message": "Defect DEF-20261021-0001 (HOT_TEAR, CRITICAL) is currently OPEN.",
+        "entity_id": "def-418a-9812",
+        "details": { "defect_number": "DEF-20261021-0001", "status": "OPEN", "severity": "CRITICAL" }
+      }
+    ],
+    "counts": {
+      "total_items": 2,
+      "inspected_items": 2,
+      "reviewed_items": 2,
+      "pending_inspection_items": 0,
+      "pending_review_items": 0,
+      "unresolved_defects": 1,
+      "resolved_defects": 0,
+      "defects_requiring_reinspection": 0,
+      "capa_requiring_verification": 0,
+      "capa_verified": 0,
+      "pending_or_failed_reinspections": 0
+    },
+    "evaluated_at": "2026-10-22T10:45:00Z"
+  }
+  ```
+
+
+#### `GET /batches/{id}/decisions`
+- **Purpose:** Retrieve the complete, chronological governance history of official decisions and holds for a batch, including immutable snapshots.
+- **Role:** `INSPECTOR`, `SUPERVISOR`, `QUALITY_MANAGER`.
+- **Response `200 OK`:**
+  ```json
+  {
+    "items": [
+      {
+        "id": "dec-9b1d-3b7d",
+        "batch_id": "batch-9812-45e",
+        "decision": "RELEASE",
+        "decided_by": "u-qm-001",
+        "reason": "All defects resolved and verified through reinspection.",
+        "is_concession": false,
+        "concession_justification": null,
+        "conditions": null,
+        "decided_at": "2026-10-22T10:50:00Z",
+        "snapshot": {
+          "decision_id": "dec-9b1d-3b7d",
+          "batch_id": "batch-9812-45e",
+          "batch_number": "LOT-202610-098",
+          "decision": "RELEASE",
+          "decided_by": "u-qm-001",
+          "decided_at": "2026-10-22T10:50:00Z",
+          "reason": "All defects resolved and verified through reinspection.",
+          "is_concession": false,
+          "is_permitted": true,
+          "blockers": [],
+          "counts": {
+            "total_items": 2,
+            "inspected_items": 2,
+            "reviewed_items": 2,
+            "pending_inspection_items": 0,
+            "pending_review_items": 0,
+            "unresolved_defects": 0,
+            "resolved_defects": 1,
+            "defects_requiring_reinspection": 0,
+            "capa_requiring_verification": 0,
+            "capa_verified": 1,
+            "pending_or_failed_reinspections": 0
+          },
+          "entities": {
+            "inspection_ids": ["insp-001"],
+            "item_ids": ["item-001", "item-002"],
+            "defect_ids": ["def-001"],
+            "capa_ids": ["capa-001"],
+            "reinspection_ids": ["re-001"]
+          }
+        }
+      }
+    ],
+    "total": 1
+  }
+  ```
+
+
 #### `POST /batches/{id}/decisions`
 - **Purpose:** Authorize official engineering governance decision (`RELEASE`, `HOLD`, `REJECT_SCRAP`, `CONCESSION_DEVIATION`) for a batch.
 - **Role:** `QUALITY_MANAGER` only (`INSPECTOR` and `SUPERVISOR` receive `403 Forbidden`).
@@ -183,16 +276,17 @@ Idempotency-Key: <UUIDv4 or client-generated unique string>
   ```json
   {
     "decision": "RELEASE",
-    "reason": "100% inspection completed. All 3 reported porosity defects resolved and verified through reinspection.",
+    "reason": "100% inspection completed. All reported porosity defects resolved and verified through reinspection.",
     "is_concession": false,
     "concession_justification": null,
     "conditions": null
   }
   ```
 - **Validation & Policy Rules:**
-  - Standard `RELEASE` requires all confirmed defects to be resolved.
-  - If open defects exist, standard release returns `422 Unprocessable Entity` (`OPEN_DEFECTS_REQUIRE_CONCESSION`) *unless* the Quality Manager explicitly sets `is_concession: true` and supplies documented `concession_justification`. An open defect does not automatically block release if the Quality Manager deliberately grants an authorized concession.
-- **Response `201 Created`:** Batch decision entity and updated batch status (`RELEASED`).
+  - Standard `RELEASE` evaluates all release-gate criteria in an atomic transaction. If any blocker is present, returns `422 Unprocessable Entity` with structured blocker details.
+  - If open defects exist, standard release returns `422 Unprocessable Entity` (`OPEN_DEFECTS_REQUIRE_CONCESSION`) *unless* the Quality Manager explicitly sets `is_concession: true` and supplies documented `concession_justification`.
+  - Concurrency conflict: If the batch status changed concurrently, returns `409 Conflict`.
+- **Response `201 Created`:** Batch decision entity including immutable decision `snapshot` and updated batch entity (`status: "RELEASED"`).
 
 
 ---

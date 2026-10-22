@@ -363,6 +363,7 @@ class BatchDecision(Base):
     reason = Column(Text, nullable=False)
     decided_by = Column(String(36), ForeignKey("users.id"), nullable=False)
     conditions = Column(Text, nullable=True)
+    snapshot = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
 
     batch = relationship("Batch", back_populates="decisions")
