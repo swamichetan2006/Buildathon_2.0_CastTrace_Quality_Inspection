@@ -15,7 +15,7 @@ import backend.app.models  # noqa: F401 - Register all models with Base.metadata
 config = context.config
 
 # Overwrite sqlalchemy.url with dynamic settings or ALEMBIC_DATABASE_URL override
-db_url = os.environ.get("ALEMBIC_DATABASE_URL") or config.get_main_option("sqlalchemy.url") or settings.DATABASE_URL
+db_url = os.environ.get("ALEMBIC_DATABASE_URL") or settings.DATABASE_URL or config.get_main_option("sqlalchemy.url")
 config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
