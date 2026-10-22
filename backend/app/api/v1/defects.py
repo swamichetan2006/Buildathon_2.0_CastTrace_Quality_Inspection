@@ -16,12 +16,15 @@ from backend.app.schemas.defects import (
     DefectReopenRequest,
     DefectResponse,
     DefectListResponse,
+    DefectRecurrenceHistoryResponse,
 )
 from backend.app.services.quality_lifecycle_service import (
     generate_defect_number,
     update_defect,
     resolve_defect,
     reopen_defect,
+    validate_and_resolve_recurrence,
+    get_defect_recurrence_history,
 )
 from backend.app.services.audit import log_audit_event
 
@@ -142,6 +145,11 @@ def create_defect_endpoint(
 
     now_utc = datetime.now(timezone.utc)
     defect_num = generate_defect_number(db)
+    prior_def_id, prior_capa_id = validate_and_resolve_recurrence(
+        db=db,
+        prior_defect_id=payload.prior_defect_id,
+        prior_corrective_action_id=payload.prior_corrective_action_id,
+    )
     defect = Defect(
         defect_number=defect_num,
         inspection_item_id=item.id,
@@ -152,7 +160,8 @@ def create_defect_endpoint(
         surface_location=payload.surface_location,
         description=payload.description,
         evidence_image_id=payload.evidence_image_id,
-        prior_defect_id=payload.prior_defect_id,
+        prior_defect_id=prior_def_id,
+        prior_corrective_action_id=prior_capa_id,
         created_at=now_utc,
         updated_at=now_utc,
     )
@@ -245,3 +254,17 @@ def reopen_defect_endpoint(
         current_user=current_user,
     )
     return DefectResponse.model_validate(defect)
+
+
+@router.get(
+    "/{id}/recurrence-history",
+    response_model=DefectRecurrenceHistoryResponse,
+    summary="Get Defect Recurrence Lineage History",
+    description="Traces the lineage of prior recurring defects and associated corrective actions.",
+)
+def get_defect_recurrence_history_endpoint(
+    id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DefectRecurrenceHistoryResponse:
+    return get_defect_recurrence_history(db=db, defect_id=id)

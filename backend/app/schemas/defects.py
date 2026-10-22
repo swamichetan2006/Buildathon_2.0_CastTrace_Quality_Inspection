@@ -40,6 +40,7 @@ class DefectCreate(BaseModel):
     description: str = Field(..., min_length=3, description="Specific defect observation details")
     evidence_image_id: Optional[str] = None
     prior_defect_id: Optional[str] = None
+    prior_corrective_action_id: Optional[str] = None
 
 
 class DefectUpdate(BaseModel):
@@ -73,6 +74,7 @@ class DefectResponse(BaseModel):
     resolved_at: Optional[datetime] = None
     resolution_notes: Optional[str] = None
     prior_defect_id: Optional[str] = None
+    prior_corrective_action_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -82,3 +84,11 @@ class DefectListResponse(BaseModel):
     total: int
     page: int
     limit: int
+
+
+class DefectRecurrenceHistoryResponse(BaseModel):
+    defect_id: str
+    defect_number: str
+    category: str
+    recurrence_chain: List[DefectResponse]
+    depth: int

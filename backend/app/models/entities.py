@@ -278,6 +278,12 @@ class Defect(Base):
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     resolution_notes = Column(Text, nullable=True)
     prior_defect_id = Column(String(36), ForeignKey("defects.id"), nullable=True, index=True)
+    prior_corrective_action_id = Column(
+        String(36),
+        ForeignKey("corrective_actions.id", use_alter=True, name="fk_defects_prior_corrective_action_id"),
+        nullable=True,
+        index=True,
+    )
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now, onupdate=get_utc_now)
 
@@ -286,7 +292,8 @@ class Defect(Base):
     evidence_image = relationship("Image", foreign_keys=[evidence_image_id])
     resolver = relationship("User", foreign_keys=[resolved_by])
     prior_defect = relationship("Defect", remote_side=[id], foreign_keys=[prior_defect_id])
-    corrective_actions = relationship("CorrectiveAction", back_populates="defect")
+    prior_corrective_action = relationship("CorrectiveAction", foreign_keys=[prior_corrective_action_id])
+    corrective_actions = relationship("CorrectiveAction", back_populates="defect", foreign_keys="CorrectiveAction.defect_id")
     reinspections = relationship("Reinspection", back_populates="defect")
 
 
@@ -303,14 +310,25 @@ class CorrectiveAction(Base):
     assigned_by = Column(String(36), ForeignKey("users.id"), nullable=False)
     status = Column(String(32), nullable=False, default="OPEN")  # OPEN, IN_PROGRESS, COMPLETED, CANCELLED
     due_date = Column(Date, nullable=False)
+    root_cause = Column(Text, nullable=True)
+    preventive_action = Column(Text, nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     completion_notes = Column(Text, nullable=True)
+    completion_evidence_image_id = Column(String(36), ForeignKey("images.id"), nullable=True)
+    verified_by = Column(String(36), ForeignKey("users.id"), nullable=True)
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+    verification_notes = Column(Text, nullable=True)
+    verification_status = Column(String(32), nullable=True, default="PENDING")  # PENDING, VERIFIED, REJECTED
+    rejection_reason = Column(Text, nullable=True)
+    verification_history = Column(JSON, nullable=True, default=list)
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now, onupdate=get_utc_now)
 
-    defect = relationship("Defect", back_populates="corrective_actions")
+    defect = relationship("Defect", back_populates="corrective_actions", foreign_keys=[defect_id])
     assignee = relationship("User", back_populates="actions_assigned", foreign_keys=[assigned_to])
     creator = relationship("User", back_populates="actions_created", foreign_keys=[assigned_by])
+    verifier = relationship("User", foreign_keys=[verified_by])
+    completion_evidence = relationship("Image", foreign_keys=[completion_evidence_image_id])
     reinspections = relationship("Reinspection", back_populates="corrective_action")
 
 
@@ -324,6 +342,7 @@ class Reinspection(Base):
     followup_inspection_id = Column(String(36), ForeignKey("inspections.id"), nullable=False)
     outcome = Column(String(32), nullable=False)  # DEFECT_RESOLVED, DEFECT_RECURRED_REOPENED
     notes = Column(Text, nullable=True)
+    evidence_image_id = Column(String(36), ForeignKey("images.id"), nullable=True)
     verified_by = Column(String(36), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
 
@@ -332,6 +351,7 @@ class Reinspection(Base):
     original_inspection = relationship("Inspection", foreign_keys=[original_inspection_id])
     followup_inspection = relationship("Inspection", foreign_keys=[followup_inspection_id])
     verifier = relationship("User", foreign_keys=[verified_by])
+    evidence_image = relationship("Image", foreign_keys=[evidence_image_id])
 
 
 class BatchDecision(Base):

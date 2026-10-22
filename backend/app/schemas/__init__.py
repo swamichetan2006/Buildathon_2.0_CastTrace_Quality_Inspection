@@ -49,6 +49,26 @@ from backend.app.schemas.defects import (
     DefectReopenRequest,
     DefectResponse,
     DefectListResponse,
+    DefectRecurrenceHistoryResponse,
+)
+from backend.app.schemas.corrective_actions import (
+    ActionType,
+    ActionStatus,
+    VerificationDecision,
+    CorrectiveActionCreate,
+    CorrectiveActionUpdate,
+    CorrectiveActionCompleteRequest,
+    CorrectiveActionCancelRequest,
+    CorrectiveActionVerifyRequest,
+    CorrectiveActionResponse,
+    CorrectiveActionListResponse,
+)
+from backend.app.schemas.reinspections import (
+    ReinspectionOutcome,
+    ReinspectionCreate,
+    ReinspectionSignOffRequest,
+    ReinspectionResponse,
+    ReinspectionListResponse,
 )
 
 __all__ = [
@@ -87,4 +107,20 @@ __all__ = [
     "DefectReopenRequest",
     "DefectResponse",
     "DefectListResponse",
+    "DefectRecurrenceHistoryResponse",
+    "ActionType",
+    "ActionStatus",
+    "VerificationDecision",
+    "CorrectiveActionCreate",
+    "CorrectiveActionUpdate",
+    "CorrectiveActionCompleteRequest",
+    "CorrectiveActionCancelRequest",
+    "CorrectiveActionVerifyRequest",
+    "CorrectiveActionResponse",
+    "CorrectiveActionListResponse",
+    "ReinspectionOutcome",
+    "ReinspectionCreate",
+    "ReinspectionSignOffRequest",
+    "ReinspectionResponse",
+    "ReinspectionListResponse",
 ]
