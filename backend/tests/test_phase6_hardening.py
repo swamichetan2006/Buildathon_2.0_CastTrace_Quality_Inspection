@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import pytest
 from datetime import datetime, timezone
 from pydantic import ValidationError
@@ -7,8 +6,6 @@ from pydantic import ValidationError
 from backend.app.config import Settings, settings
 from backend.app.services.inference_service import InferenceService
 from backend.app.models.entities import Image, Product, Batch
-from scripts.backup_database import create_backup
-from scripts.restore_database import restore_database, verify_database_file
 
 
 class TestSettingsSecurityValidation:
@@ -21,6 +18,8 @@ class TestSettingsSecurityValidation:
                 SECRET_KEY="casttrace-dev-insecure-secret-key-change-in-production-32bytes-min",
                 APP_DEBUG=False,
                 BACKEND_CORS_ORIGINS=["https://app.casttrace.local"],
+                DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+                TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
             )
         assert "A default or development SECRET_KEY cannot be used in production" in str(exc_info.value)
 
@@ -31,6 +30,8 @@ class TestSettingsSecurityValidation:
                 SECRET_KEY="abc123xyz-short-key",
                 APP_DEBUG=False,
                 BACKEND_CORS_ORIGINS=["https://app.casttrace.local"],
+                DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+                TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
             )
         assert "Production SECRET_KEY must be at least 32 characters long" in str(exc_info.value)
 
@@ -41,6 +42,8 @@ class TestSettingsSecurityValidation:
                 SECRET_KEY="cf8m_super_secure_random_production_key_9999",
                 APP_DEBUG=True,
                 BACKEND_CORS_ORIGINS=["https://app.casttrace.local"],
+                DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+                TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
             )
         assert "APP_DEBUG must be set to false in production" in str(exc_info.value)
 
@@ -51,6 +54,8 @@ class TestSettingsSecurityValidation:
                 SECRET_KEY="cf8m_super_secure_random_production_key_9999",
                 APP_DEBUG=False,
                 BACKEND_CORS_ORIGINS=["*"],
+                DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+                TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
             )
         assert "BACKEND_CORS_ORIGINS must not contain wildcard '*'" in str(exc_info.value)
 
@@ -60,10 +65,63 @@ class TestSettingsSecurityValidation:
             SECRET_KEY="cf8m_super_secure_random_production_key_9999",
             APP_DEBUG=False,
             BACKEND_CORS_ORIGINS=["https://app.casttrace.local"],
+            DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+            TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
         )
         assert cfg.APP_ENV == "production"
         assert cfg.APP_DEBUG is False
         assert len(cfg.SECRET_KEY) >= 32
+        assert cfg.DATABASE_URL.startswith("postgresql://")
+        assert cfg.TEST_DATABASE_URL.startswith("postgresql://")
+
+
+class TestPostgreSQLConfigurationValidation:
+    """Validates that PostgreSQL is strictly enforced and SQLite is completely rejected."""
+
+    def test_rejects_missing_database_url(self):
+        with pytest.raises(ValidationError) as exc_info:
+            Settings(
+                DATABASE_URL="",
+                TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
+            )
+        assert "DATABASE_URL is required" in str(exc_info.value)
+
+    def test_rejects_sqlite_database_url(self):
+        with pytest.raises(ValidationError) as exc_info:
+            Settings(
+                DATABASE_URL="sqlite:///./casttrace.db",
+                TEST_DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_test",
+            )
+        assert "SQLite is not supported" in str(exc_info.value)
+
+    def test_rejects_missing_test_database_url(self):
+        with pytest.raises(ValidationError) as exc_info:
+            Settings(
+                DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+                TEST_DATABASE_URL="",
+            )
+        assert "TEST_DATABASE_URL is required" in str(exc_info.value)
+
+    def test_rejects_sqlite_test_database_url(self):
+        with pytest.raises(ValidationError) as exc_info:
+            Settings(
+                DATABASE_URL="postgresql://postgres:password@localhost:5432/casttrace_dev",
+                TEST_DATABASE_URL="sqlite:///./casttrace_test.db",
+            )
+        assert "SQLite is not supported" in str(exc_info.value)
+
+    def test_accepts_valid_postgresql_drivers(self):
+        urls = [
+            "postgresql://user:pass@localhost:5432/casttrace_dev",
+            "postgresql+psycopg2://user:pass@localhost:5432/casttrace_dev",
+            "postgresql+asyncpg://user:pass@localhost:5432/casttrace_dev",
+        ]
+        for url in urls:
+            cfg = Settings(
+                DATABASE_URL=url,
+                TEST_DATABASE_URL="postgresql://user:pass@localhost:5432/casttrace_test",
+            )
+            assert cfg.DATABASE_URL == url
 
 
 class TestEvidenceStorageHardening:
@@ -140,48 +198,3 @@ class TestMLArtifactDiagnostics:
         assert "ml_artifacts" in data["details"]
         artifacts = data["details"]["ml_artifacts"]
         assert "is_inference_ready" in artifacts
-
-
-class TestSQLiteBackupAndRestore:
-    """Validates SQLite online backup and safe restoration without touching real DB."""
-
-    def test_backup_and_restore_cycle(self, tmp_path):
-        # Create a source test database with schema and data
-        source_db = str(tmp_path / "test_source.db")
-        conn = sqlite3.connect(source_db)
-        cursor = conn.cursor()
-        cursor.execute("CREATE TABLE test_data (id INTEGER PRIMARY KEY, name TEXT);")
-        cursor.execute("INSERT INTO test_data (name) VALUES ('Impeller-Batch-A');")
-        cursor.execute("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL);")
-        cursor.execute("INSERT INTO alembic_version VALUES ('6eae03ca7c6e');")
-        conn.commit()
-        conn.close()
-
-        # Perform backup
-        backup_dir = str(tmp_path / "backups")
-        backup_path = create_backup(destination_dir=backup_dir, source_db=source_db, required_tables=["test_data", "alembic_version"])
-        assert os.path.exists(backup_path)
-
-        # Check-only verification
-        verified_tables = verify_database_file(backup_path)
-        assert "test_data" in verified_tables
-        assert "alembic_version" in verified_tables
-
-        # Restore to new target database
-        restored_db = str(tmp_path / "test_restored.db")
-        target_path = restore_database(
-            backup_file=backup_path,
-            target_db_path=restored_db,
-            create_safety_backup=False,
-            required_tables=["test_data", "alembic_version"],
-        )
-        assert target_path == restored_db
-
-        # Verify restored DB integrity and records
-        rconn = sqlite3.connect(restored_db)
-        rcursor = rconn.cursor()
-        rcursor.execute("PRAGMA integrity_check;")
-        assert rcursor.fetchone()[0] == "ok"
-        rcursor.execute("SELECT name FROM test_data WHERE id = 1;")
-        assert rcursor.fetchone()[0] == "Impeller-Batch-A"
-        rconn.close()

@@ -46,12 +46,12 @@ switch ($Action.ToLower()) {
         Pop-Location
     }
     "backup" {
-        Write-Host "Creating WAL-safe SQLite database backup..." -ForegroundColor Cyan
-        .\.venv\Scripts\python.exe scripts\backup_database.py
+        Write-Host "PostgreSQL database backup (pg_dump)..." -ForegroundColor Cyan
+        Write-Host "Run: pg_dump -U postgres -d casttrace_dev -F c -f backups\casttrace_dev.dump" -ForegroundColor Yellow
     }
     "restore" {
-        Write-Host "Restoring SQLite database from backup..." -ForegroundColor Cyan
-        .\.venv\Scripts\python.exe scripts\restore_database.py
+        Write-Host "PostgreSQL database restoration (pg_restore)..." -ForegroundColor Cyan
+        Write-Host "Run: pg_restore -U postgres -d casttrace_dev -c backups\casttrace_dev.dump" -ForegroundColor Yellow
     }
     "verify" {
         Write-Host "Running live integration verification suite..." -ForegroundColor Cyan
@@ -90,8 +90,8 @@ switch ($Action.ToLower()) {
         Write-Host "  seed      - Seed demo accounts (Inspector, Supervisor, QM)"
         Write-Host "  test      - Run backend pytest and frontend production build"
         Write-Host "  lint      - Run frontend linter (oxlint)"
-        Write-Host "  backup    - Create verified, timestamped SQLite backup"
-        Write-Host "  restore   - Restore SQLite database from backup"
+        Write-Host "  backup    - Instructions for PostgreSQL pg_dump backup"
+        Write-Host "  restore   - Instructions for PostgreSQL pg_restore restoration"
         Write-Host "  verify    - Run live Phase 5D integration verification suite"
         Write-Host "  smoke     - Run non-destructive clean-clone setup verification"
         Write-Host "  status    - Probe backend and frontend services"

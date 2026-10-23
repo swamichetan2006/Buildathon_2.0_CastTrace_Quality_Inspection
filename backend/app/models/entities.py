@@ -185,7 +185,6 @@ class ModelRun(Base):
             "image_id",
             "model_version_id",
             unique=True,
-            sqlite_where=text("status IN ('QUEUED', 'PROCESSING')"),
             postgresql_where=text("status IN ('QUEUED', 'PROCESSING')"),
         ),
     )

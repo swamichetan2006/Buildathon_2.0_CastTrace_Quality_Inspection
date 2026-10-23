@@ -3,7 +3,7 @@ import shutil
 import tempfile
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from backend.app.config import settings
@@ -12,43 +12,78 @@ from backend.app.database import Base, get_db
 from backend.app.main import app
 from backend.app.models.entities import User, ModelVersion
 
-# Test database URL (defaults to isolated SQLite file, or dedicated PostgreSQL test database)
-TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or settings.TEST_DATABASE_URL or "sqlite:///./casttrace_test.db"
+# Require TEST_DATABASE_URL to be explicitly configured and use PostgreSQL
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or settings.TEST_DATABASE_URL
 
-test_connect_args = {"check_same_thread": False} if TEST_DATABASE_URL.startswith("sqlite") else {}
+if not TEST_DATABASE_URL:
+    raise RuntimeError(
+        "TEST_DATABASE_URL is not set. A PostgreSQL test database is required. "
+        "SQLite is not supported. Please set TEST_DATABASE_URL in .env"
+    )
+
+if not (TEST_DATABASE_URL.startswith("postgresql://") or TEST_DATABASE_URL.startswith("postgresql+")):
+    raise RuntimeError(
+        f"TEST_DATABASE_URL must be a PostgreSQL connection string (postgresql://...). Got: {TEST_DATABASE_URL}. "
+        "SQLite and other non-PostgreSQL databases are completely disabled."
+    )
+
+# Safeguard: Never run tests against the main development database
+dev_db = settings.DATABASE_URL
+if dev_db and TEST_DATABASE_URL == dev_db:
+    raise RuntimeError(
+        f"CRITICAL SAFETY CHECK FAILED: TEST_DATABASE_URL ({TEST_DATABASE_URL}) cannot be identical to DATABASE_URL ({dev_db}). "
+        "Tests must run in a dedicated, isolated test database to protect development data."
+    )
+
 test_engine = create_engine(
     TEST_DATABASE_URL,
-    connect_args=test_connect_args,
+    pool_pre_ping=True,
+    echo=False,
+    future=True,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
+def _seed_default_model_version(session):
+    mv = session.query(ModelVersion).filter(
+        (ModelVersion.id == "mv-resnet18-v1") | (ModelVersion.version_name == "v1.0.0-resnet18")
+    ).first()
+    if not mv:
+        mv = ModelVersion(
+            id="mv-resnet18-v1",
+            version_name="v1.0.0-resnet18",
+            model_architecture="ResNet-18",
+            weights_path="ml/artifacts/model_best.pt",
+            training_dataset_info={"source": "test_dataset"},
+            metrics={"accuracy": 1.0},
+            is_active=True,
+        )
+        session.add(mv)
+        session.commit()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
+    # Verify PostgreSQL connectivity
+    try:
+        with test_engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to connect to PostgreSQL test database at {TEST_DATABASE_URL}. "
+            f"Ensure PostgreSQL is running and the database exists. Error: {exc}"
+        ) from exc
+
     Base.metadata.create_all(bind=test_engine)
     with TestingSessionLocal() as session:
-        mv = session.query(ModelVersion).filter(
-            (ModelVersion.id == "mv-resnet18-v1") | (ModelVersion.version_name == "v1.0.0-resnet18")
-        ).first()
-        if not mv:
-            mv = ModelVersion(
-                id="mv-resnet18-v1",
-                version_name="v1.0.0-resnet18",
-                model_architecture="ResNet-18",
-                weights_path="ml/artifacts/model_best.pt",
-                training_dataset_info={"source": "test_dataset"},
-                metrics={"accuracy": 1.0},
-                is_active=True,
-            )
-            session.add(mv)
-            session.commit()
+        _seed_default_model_version(session)
     yield
-    Base.metadata.drop_all(bind=test_engine)
-    if TEST_DATABASE_URL.startswith("sqlite") and os.path.exists("./casttrace_test.db"):
-        try:
-            os.remove("./casttrace_test.db")
-        except OSError:
-            pass
+    # Clean up schema objects on session teardown
+    try:
+        with test_engine.begin() as conn:
+            conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+    except Exception:
+        pass
 
 
 @pytest.fixture
@@ -59,6 +94,14 @@ def db_session():
     finally:
         db.rollback()
         db.close()
+        # Truncate tables between tests for complete test isolation without dropping schemas
+        try:
+            with test_engine.begin() as conn:
+                table_names = [f'"{table.name}"' for table in Base.metadata.sorted_tables if table.name != "model_versions"]
+                if table_names:
+                    conn.execute(text(f"TRUNCATE TABLE {', '.join(table_names)} RESTART IDENTITY CASCADE;"))
+        except Exception:
+            pass
 
 
 @pytest.fixture
@@ -90,7 +133,6 @@ def seeded_users(db_session):
         ("test_inspector", "inspector@casttrace.local", "INSPECTOR"),
         ("test_supervisor", "supervisor@casttrace.local", "SUPERVISOR"),
         ("test_qm", "qm@casttrace.local", "QUALITY_MANAGER"),
-
     ]
     for username, email, role in roles:
         u = db_session.query(User).filter(User.username == username).first()

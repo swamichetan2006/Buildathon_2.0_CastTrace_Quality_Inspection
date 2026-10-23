@@ -35,7 +35,7 @@ def get_health(response: Response, db: Session = Depends(get_db)) -> HealthRespo
             database_latency_ms=latency_ms,
             timestamp=now_utc,
             details={
-                "sqlite_compatible": True,
+                "database_type": "postgresql",
                 "dialect": db.bind.dialect.name if db.bind else "unknown",
                 "ml_artifacts": ml_status,
             },

@@ -4,13 +4,12 @@ Validates application reproducibility, isolated database migration/seeding,
 live service health, ML artifact integrity, authentication, and read-only APIs.
 
 Safety: Performs database migration and seeding checks against an ISOLATED
-temporary SQLite database file without touching the active development database.
+PostgreSQL test database (TEST_DATABASE_URL) without touching the active development database.
 """
 
 import os
 import sys
 import time
-import sqlite3
 import tempfile
 import httpx
 from datetime import datetime, timezone
@@ -59,69 +58,62 @@ def main():
         record_check("Configuration", "Load Settings", False, str(e))
 
     # -------------------------------------------------------------------------
-    # 2. ISOLATED CLEAN-DATABASE MIGRATION & SEEDING (TEMP DB)
+    # 2. ISOLATED CLEAN-DATABASE MIGRATION & SEEDING (POSTGRESQL TEST DB)
     # -------------------------------------------------------------------------
-    print("\n--- 2. Isolated Clean SQLite Database Migration & Seeding ---")
-    temp_dir = tempfile.mkdtemp(prefix="casttrace_clean_setup_")
-    temp_db_path = os.path.join(temp_dir, "clean_test.db")
-    temp_db_url = f"sqlite:///{temp_db_path}"
-
-    try:
-        print(f"Creating isolated temporary database at: {temp_db_path}")
-        # Run Alembic migrations programmatically
-        os.environ["ALEMBIC_DATABASE_URL"] = temp_db_url
-        alembic_cfg = Config(os.path.join(PROJECT_ROOT, "alembic.ini"))
-        alembic_cfg.set_main_option("sqlalchemy.url", temp_db_url)
-        alembic_cfg.set_main_option("script_location", os.path.join(PROJECT_ROOT, "backend", "alembic"))
-        command.upgrade(alembic_cfg, "head")
-        os.environ.pop("ALEMBIC_DATABASE_URL", None)
-
-        # Verify integrity of newly migrated schema
-        conn = sqlite3.connect(temp_db_path)
-        cur = conn.cursor()
-        cur.execute("PRAGMA integrity_check;")
-        res = cur.fetchone()
-        cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [row[0] for row in cur.fetchall()]
-        conn.close()
-
-        mig_passed = (res and res[0] == "ok" and len(tables) >= 15)
-        record_check("Database Migration", "Alembic Upgrade Head on Fresh SQLite", mig_passed,
-                     f"Integrity {res[0]}, created {len(tables)} tables")
-
-        # Test seeding demo accounts into isolated DB
-        from backend.scripts.seed import seed_database
-        engine = create_engine(temp_db_url)
-        SessionTest = sessionmaker(bind=engine)
-        test_session = SessionTest()
+    print("\n--- 2. Isolated Clean PostgreSQL Database Migration & Seeding ---")
+    test_db_url = settings.TEST_DATABASE_URL
+    if not test_db_url or not (test_db_url.startswith("postgresql://") or test_db_url.startswith("postgresql+")):
+        record_check("Database Setup", "PostgreSQL Test Database Configured", False, "TEST_DATABASE_URL must be a valid PostgreSQL connection string")
+    elif test_db_url == settings.DATABASE_URL:
+        record_check("Database Setup", "PostgreSQL Safety Isolation Check", False, "TEST_DATABASE_URL cannot match development DATABASE_URL")
+    else:
         try:
-            seed_database(test_session)
-            from backend.app.models.entities import User
-            users = test_session.query(User).all()
-            user_roles = {u.username: u.role for u in users}
-            expected_roles = {
-                "inspector_chen": "INSPECTOR",
-                "supervisor_torres": "SUPERVISOR",
-                "qm_reynolds": "QUALITY_MANAGER",
-            }
-            seed_ok = all(user_roles.get(u) == r for u, r in expected_roles.items())
-            record_check("Database Seeding", "Seed Demo Accounts on Fresh SQLite", seed_ok,
-                         f"Seeded accounts: {', '.join(user_roles.keys())}")
-        finally:
-            test_session.close()
-            engine.dispose()
+            from sqlalchemy import create_engine, text
+            test_engine = create_engine(test_db_url)
+            # Reset public schema cleanly on test database
+            with test_engine.begin() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
 
-    except Exception as e:
-        record_check("Database Setup", "Isolated Clean DB Migration & Seeding", False, str(e))
-    finally:
-        # Clean up temporary database directory
-        try:
-            if os.path.exists(temp_db_path):
-                os.remove(temp_db_path)
-            os.rmdir(temp_dir)
-            print("Cleaned up isolated temporary test database.")
+            # Run Alembic migrations programmatically
+            os.environ["ALEMBIC_DATABASE_URL"] = test_db_url
+            alembic_cfg = Config(os.path.join(PROJECT_ROOT, "alembic.ini"))
+            alembic_cfg.set_main_option("sqlalchemy.url", test_db_url.replace("%", "%%"))
+            alembic_cfg.set_main_option("script_location", os.path.join(PROJECT_ROOT, "backend", "alembic"))
+            command.upgrade(alembic_cfg, "head")
+            os.environ.pop("ALEMBIC_DATABASE_URL", None)
+
+            # Verify integrity of newly migrated schema via information_schema
+            with test_engine.connect() as conn:
+                res = conn.execute(text("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE';"))
+                tables = [row[0] for row in res.fetchall()]
+
+            mig_passed = (len(tables) >= 15 and "alembic_version" in tables)
+            record_check("Database Migration", "Alembic Upgrade Head on Fresh PostgreSQL", mig_passed,
+                         f"Created {len(tables)} tables in PostgreSQL schema public")
+
+            # Test seeding demo accounts into isolated DB
+            from backend.scripts.seed import seed_database
+            SessionTest = sessionmaker(bind=test_engine)
+            test_session = SessionTest()
+            try:
+                seed_database(test_session)
+                from backend.app.models.entities import User
+                users = test_session.query(User).all()
+                user_roles = {u.username: u.role for u in users}
+                expected_roles = {
+                    "inspector_chen": "INSPECTOR",
+                    "supervisor_torres": "SUPERVISOR",
+                    "qm_reynolds": "QUALITY_MANAGER",
+                }
+                seed_ok = all(user_roles.get(u) == r for u, r in expected_roles.items())
+                record_check("Database Seeding", "Seed Demo Accounts on Fresh PostgreSQL", seed_ok,
+                             f"Seeded accounts: {', '.join(user_roles.keys())}")
+            finally:
+                test_session.close()
+                test_engine.dispose()
+
         except Exception as e:
-            print(f"Note on temp cleanup: {e}")
+            record_check("Database Setup", "Isolated Clean DB Migration & Seeding", False, str(e))
 
     # -------------------------------------------------------------------------
     # 3. ML ARTIFACT REPRODUCIBILITY & INTEGRITY

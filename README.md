@@ -49,10 +49,10 @@ CastTrace AI governs the end-to-end quality lifecycle through six tightly coordi
 
 CastTrace AI strictly decouples the web API layer from the machine learning inference workload:
 
-* **API Backend (FastAPI):** Light-weight, async HTTP service on port `8001`. Serves REST endpoints, validates schemas via Pydantic v2, enforces RBAC, writes audit trails, and enqueues inference jobs in SQLite. **The API process never loads PyTorch weights into memory.**
-* **Inference Worker (`worker.py`):** Detached background daemon. Polls SQLite for queued jobs, acquires 45-second atomic leases, verifies file hash integrity, executes ResNet-18 forward pass on GPU/CPU, and commits results.
+* **API Backend (FastAPI):** Light-weight, async HTTP service on port `8001`. Serves REST endpoints, validates schemas via Pydantic v2, enforces RBAC, writes audit trails, and enqueues inference jobs in PostgreSQL. **The API process never loads PyTorch weights into memory.**
+* **Inference Worker (`worker.py`):** Detached background daemon. Polls PostgreSQL for queued jobs, acquires 45-second atomic leases, verifies file hash integrity, executes ResNet-18 forward pass on GPU/CPU, and commits results.
 * **Frontend SPA (React + Vite + Tailwind CSS):** Modern single-page application on port `5173`. Proxies API traffic via Vite development server, maintains JWT authentication state, and provides real-time quality triage views.
-* **Database (SQLite with WAL mode):** Zero-configuration local relational database. Configured with Write-Ahead Logging (`PRAGMA journal_mode=WAL`) and `busy_timeout=5000` for concurrent read/write transactions. Fully compatible with PostgreSQL.
+* **Database (PostgreSQL 14+):** Robust, enterprise-grade relational database engine. CastTrace AI standardizes exclusively on PostgreSQL for all runtime, background worker, and automated test workloads (SQLite is not supported).
 
 For architectural specifications, see:
 * [Entity Relationship Diagram](docs/erd.md)
@@ -72,7 +72,8 @@ Ensure the following tools are installed on your host machine:
 | Component | Minimum Version | Development Baseline | Check Command |
 | :--- | :--- | :--- | :--- |
 | **Operating System** | Windows 10/11, macOS, Linux | Windows 11 (x64) | `cmd /c ver` |
-| **Python** | 3.10+ | Python 3.14.6 | `python --version` |
+| **PostgreSQL** | 14.0+ | PostgreSQL 18.6 | `psql --version` |
+| **Python** | 3.10+ | Python 3.10+ / 3.14 | `python --version` |
 | **Node.js** | 18.0.0+ | Node.js 20.x | `node --version` |
 | **npm** | 9.0.0+ | npm 10.x | `npm --version` |
 | **Git** | 2.30+ | Git 2.45+ | `git --version` |
@@ -89,22 +90,24 @@ Copy-Item .env.example .env
 
 ### Key Configuration Variables
 
-| Variable | Default Value | Purpose |
-| :--- | :--- | :--- |
-| `APP_ENV` | `development` | Environment mode (`development`, `staging`, `production`). In `production`, strict security checks fail-safe on weak secrets. |
-| `APP_DEBUG` | `true` | Detailed debug error reporting. Replaced with sanitized errors in production. |
-| `HOST` | `127.0.0.1` | Local network binding interface. |
-| `PORT` | `8001` | Backend HTTP API port. |
-| `SECRET_KEY` | *(dev placeholder)* | HMAC-SHA256 signing secret for JWTs. Must be ≥32 characters and cryptographically random in production. |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `480` | Session lifetime (480 min = 8 hours shift). |
-| `DATABASE_URL` | `sqlite:///./casttrace.db` | Local SQLite database file location. |
-| `STORAGE_DIR` | `./storage/evidence` | Dedicated evidence repository for uploaded inspection photos. |
-| `MAX_UPLOAD_SIZE_BYTES` | `10485760` | 10 MB maximum upload limit per image file. |
-| `ML_ARTIFACTS_DIR` | `ml/artifacts` | Directory containing trained weights and guard vectors. |
-| `WORKER_POLL_INTERVAL` | `1.0` | Background worker queue polling interval (seconds). |
-| `BACKEND_CORS_ORIGINS` | `["http://localhost:5173", ...]` | Explicit CORS allowed origins. Wildcards (`*`) are rejected. |
+| Variable | Required? | Example Value | Purpose |
+| :--- | :--- | :--- | :--- |
+| `DATABASE_URL` | **YES** | `postgresql+psycopg2://postgres:YOUR_PASSWORD@127.0.0.1:5432/casttrace_dev` | Primary PostgreSQL development database connection URL. |
+| `TEST_DATABASE_URL` | **YES** | `postgresql+psycopg2://postgres:YOUR_PASSWORD@127.0.0.1:5432/casttrace_test` | Dedicated isolated PostgreSQL database URL for test suites. Must not match `DATABASE_URL`. |
+| `APP_ENV` | Optional | `development` | Environment mode (`development`, `staging`, `production`). In `production`, strict security checks fail-safe on weak secrets. |
+| `APP_DEBUG` | Optional | `true` | Detailed debug error reporting. Replaced with sanitized errors in production. |
+| `HOST` | Optional | `127.0.0.1` | Local network binding interface. |
+| `PORT` | Optional | `8001` | Backend HTTP API port. |
+| `SECRET_KEY` | Optional | *(dev placeholder)* | HMAC-SHA256 signing secret for JWTs. Must be ≥32 characters and cryptographically random in production. |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Optional | `480` | Session lifetime (480 min = 8 hours shift). |
+| `STORAGE_DIR` | Optional | `./storage/evidence` | Dedicated evidence repository for uploaded inspection photos. |
+| `MAX_UPLOAD_SIZE_BYTES` | Optional | `10485760` | 10 MB maximum upload limit per image file. |
+| `ML_ARTIFACTS_DIR` | Optional | `ml/artifacts` | Directory containing trained weights and guard vectors. |
+| `WORKER_POLL_INTERVAL` | Optional | `1.0` | Background worker queue polling interval (seconds). |
+| `BACKEND_CORS_ORIGINS` | Optional | `["http://localhost:5173", ...]` | Explicit CORS allowed origins. Wildcards (`*`) are rejected. |
+| `GEMINI_API_KEY` | Optional | *(AI Studio Key)* | Google Generative AI API key for Quality Intelligence. |
 
-> **Security Rule:** Never commit `.env` to Git. The `.gitignore` file strictly excludes `.env`, `*.db`, `storage/`, and `backups/`.
+> **Security Rule:** Never commit `.env` to Git. The `.gitignore` file strictly excludes `.env`, `storage/`, and `backups/`.
 
 ---
 
@@ -126,7 +129,21 @@ pip install -e .\ml
 
 *Note: The `-e .\ml` command installs the local `casttrace_ml` package in editable mode.*
 
-### Step 5.2: Apply SQLite Database Migrations
+### Step 5.2: Create PostgreSQL Development and Test Databases
+
+Open PowerShell or terminal and create two separate PostgreSQL databases:
+
+```powershell
+# Create development database
+psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE casttrace_dev;"
+
+# Create dedicated test database
+psql -U postgres -h 127.0.0.1 -p 5432 -c "CREATE DATABASE casttrace_test;"
+```
+
+Update your `.env` with your PostgreSQL username and password in `DATABASE_URL` and `TEST_DATABASE_URL`.
+
+### Step 5.3: Apply Database Migrations (PostgreSQL)
 
 Apply the complete Alembic migration sequence (head revision `6eae03ca7c6e`):
 
@@ -134,9 +151,9 @@ Apply the complete Alembic migration sequence (head revision `6eae03ca7c6e`):
 .\.venv\Scripts\alembic.exe upgrade head
 ```
 
-This constructs all 18 relational tables including indexes, unique constraints, foreign keys, and the `audit_log` ledger.
+This constructs all 18 relational tables including indexes, unique constraints, foreign keys, and the `audit_log` ledger directly on PostgreSQL.
 
-### Step 5.3: Seed Demo Operational Accounts
+### Step 5.4: Seed Demo Operational Accounts
 
 Run the idempotent seed script to populate test accounts:
 
@@ -269,23 +286,23 @@ CastTrace AI includes automated unit tests, security tests, and live end-to-end 
 
 ### 8.1 Backend Test Suite (Pytest)
 
-Run all 82 automated backend tests across models, services, RBAC, release gates, and security hardening:
+Run all 144 automated backend tests across models, services, RBAC, release gates, GenAI Quality Intelligence, and security hardening:
 
 ```powershell
 .\.venv\Scripts\pytest.exe backend/tests -v
 ```
 
-*(All tests execute against an isolated temporary database `casttrace_test.db` and clean up automatically).*
+*(All tests execute against the dedicated isolated PostgreSQL test database configured in `TEST_DATABASE_URL` (e.g. `casttrace_test`). Built-in safety checks prevent tests from ever executing against `casttrace_dev`).*
 
 ### 8.2 Clean-Clone Reproducibility Verification
 
-To verify that the application configuration, Alembic migrations, database seeding, artifact diagnostics, and API connectivity can run completely from scratch:
+To verify that the application configuration, PostgreSQL Alembic migrations, database seeding, artifact diagnostics, and API connectivity can run completely from scratch:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/verify_clean_setup.py
 ```
 
-*This script spins up an isolated temporary SQLite database, runs all migrations, seeds test users, checks ML integrity, and performs live API probes (14/14 checks).*
+*This script connects to the isolated PostgreSQL test database, resets the public schema, applies all migrations, seeds test users, checks ML integrity, and performs live API probes.*
 
 ### 8.3 Live Application Integration Verification (Phase 5D)
 
@@ -306,45 +323,30 @@ cd ..
 
 ---
 
-## 9. SQLite Backup, Restoration & Migration Safety
+## 9. PostgreSQL Backup, Restoration & Maintenance
 
-CastTrace AI includes robust, non-destructive database backup and recovery utilities utilizing the official SQLite Online Backup API.
+CastTrace AI utilizes PostgreSQL's native utilities (`pg_dump` and `pg_restore`) for high-performance, point-in-time consistent database backups.
 
 ### 9.1 Creating a Database Backup
 
-Run the backup utility to create a timestamped, WAL-consistent backup file:
+Run `pg_dump` to produce a compressed, custom-format archive:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/backup_database.py
+pg_dump -U postgres -h 127.0.0.1 -p 5432 -d casttrace_dev -F c -b -v -f backups\casttrace_dev_backup.dump
 ```
 
-* Output location: `backups/casttrace_backup_YYYYMMDD_HHMMSS.db`
-* Safety: Uses `source_conn.backup(dest_conn)` which safely locks pages without interrupting live readers.
-* Verification: Automatically runs `PRAGMA integrity_check` and confirms all 15 core tables exist before reporting success.
+* Output location: `backups\casttrace_dev_backup.dump`
+* Safety: Produces a consistent snapshot without blocking read or write operations.
 
-### 9.2 Verifying a Backup File (Non-Destructive)
+### 9.2 Restoring from a Backup
 
-Check whether a backup file is structurally valid without modifying the active database:
+To restore the development database from a backup file:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/restore_database.py --backup backups/<backup_file>.db --check-only
+# 1. Stop backend and worker processes (Ctrl+C in their terminals)
+# 2. Execute restoration with clean table recreation (-c):
+pg_restore -U postgres -h 127.0.0.1 -p 5432 -d casttrace_dev -c -v backups\casttrace_dev_backup.dump
 ```
-
-### 9.3 Restoring from a Backup
-
-To restore a verified backup:
-
-```powershell
-# 1. Gracefully stop backend and worker processes (Ctrl+C in their terminals)
-# 2. Execute restoration:
-.\.venv\Scripts\python.exe scripts/restore_database.py --backup backups/<backup_file>.db
-```
-
-**Restoration Safeguards:**
-1. Pre-flight verification of backup file integrity.
-2. Creates an automatic pre-restore safety copy (`casttrace.db.pre_restore_YYYYMMDD_HHMMSS.bak`).
-3. Performs atomic restoration using SQLite backup API.
-4. Verifies restored database integrity and Alembic migration version (`6eae03ca7c6e`).
 
 ---
 
@@ -352,11 +354,12 @@ To restore a verified backup:
 
 | Parameter | Development Mode (`APP_ENV=development`) | Production Mode (`APP_ENV=production`) |
 | :--- | :--- | :--- |
+| **`DATABASE_URL`** | PostgreSQL (`casttrace_dev`) | Managed PostgreSQL (HA replica, SSL enforced) |
+| **`TEST_DATABASE_URL`** | Dedicated PostgreSQL (`casttrace_test`) | Dedicated isolated test instance |
 | **`APP_DEBUG`** | `true` (Full exception stack traces in logs) | **`false`** (Sanitized error responses, no traceback leaks) |
 | **`SECRET_KEY`** | Default dev key permitted with startup warning | **Enforced:** Must be random, ≥32 chars, cannot contain "dev" or "insecure" |
 | **CORS Origins** | `localhost:5173`, `localhost:3000` | Explicit production FQDN (e.g. `https://quality.company.com`). Wildcards rejected. |
 | **Static Serving** | Vite dev proxy with HMR | Static bundle built via `npm run build`, served by Nginx / Caddy |
-| **Database Engine** | SQLite WAL mode (`casttrace.db`) | SQLite on persistent volume (or managed PostgreSQL) |
 | **Worker Execution**| Terminal script | Systemd service or supervised container daemon |
 
 ### Generating a Production Secret Key
@@ -371,25 +374,33 @@ python -c "import secrets; print(secrets.token_urlsafe(32))"
 
 When deploying CastTrace AI outside local development:
 
-1. **Reverse Proxy (Nginx / Caddy / Cloudflare):**
+1. **Database Provisioning (PostgreSQL 14+):**
+   * Use an enterprise managed PostgreSQL database (e.g., AWS RDS, Cloud SQL, Azure PostgreSQL).
+   * Configure SSL mode `sslmode=require` or `sslmode=verify-full`.
+   * Ensure `pool_pre_ping=True` is enabled (configured by default in `database.py`) to handle pooled connection timeouts.
+2. **Reverse Proxy (Nginx / Caddy / Cloudflare):**
    * Terminate TLS (HTTPS) externally.
    * Route `/api/` and `/health` to FastAPI on port `8001`.
    * Route `/` to static frontend files built via `npm run build` (`frontend/dist`).
    * Never expose the backend port `8001` or worker directly to the public Internet.
-2. **Persistent Storage:**
-   * Ensure `casttrace.db` and `storage/evidence/` reside on persistent, backed-up block storage volumes.
+3. **Persistent Evidence Storage:**
+   * Ensure `storage/evidence/` resides on persistent, encrypted network block storage volumes.
    * Restrict OS permissions on `storage/evidence/` to the application runtime user.
-3. **Worker Supervision:**
+4. **Worker Supervision:**
    * Supervise `worker.py` using `systemd`, `supervisor`, or a container orchestrator with automatic restart policies.
-   * Ensure only one active worker instance runs per SQLite database to prevent lock contention.
 
 ---
 
-## 12. Known Setup Limitations
+## 12. Troubleshooting Common PostgreSQL Errors
 
-* **SQLite Concurrency:** SQLite WAL mode allows multiple concurrent readers and one writer. For high-throughput factory lines with >50 concurrent inspectors, migration to PostgreSQL is recommended.
-* **Worker Process:** The inference worker must run continuously in the background for automated AI triage. If the worker is offline, inspections remain in `QUEUED` state until the worker is restarted.
-* **Model Artifacts:** Real defect inference requires local provisioning of `ml/artifacts/model_best.pt` due to licensing boundaries.
+| Error Symptom | Root Cause | Solution |
+| :--- | :--- | :--- |
+| **`could not connect to server: Connection refused`** | PostgreSQL service is stopped or port 5432 is blocked. | Verify service is running: `Get-Service postgresql*` (Windows) or `systemctl status postgresql` (Linux). |
+| **`password authentication failed for user "postgres"`** | Incorrect password in `DATABASE_URL`. | Check credentials in `.env`. Ensure special characters in password are URL-encoded (e.g., `@` becomes `%40`, `#` becomes `%23`). |
+| **`database "casttrace_dev" does not exist`** | Target database has not been created in PostgreSQL yet. | Run `psql -U postgres -c "CREATE DATABASE casttrace_dev;"` and `psql -U postgres -c "CREATE DATABASE casttrace_test;"`. |
+| **`CRITICAL SAFETY CHECK FAILED: TEST_DATABASE_URL cannot be identical to DATABASE_URL`** | Tests were pointed to the active development database. | Set `TEST_DATABASE_URL` to a distinct database (`casttrace_test`) in `.env`. |
+| **`CONFIGURATION ERROR: SQLite is not supported`** | `DATABASE_URL` or `TEST_DATABASE_URL` uses SQLite. | CastTrace AI standardizes exclusively on PostgreSQL. Update URLs to `postgresql+psycopg2://...`. |
+| **`relation "users" does not exist`** | Migrations have not yet been run on the PostgreSQL database. | Run `alembic upgrade head` from the project root. |
 
 ---
 
