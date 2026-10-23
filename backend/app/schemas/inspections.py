@@ -2,6 +2,9 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
+from backend.app.schemas.images import ImageResponse
+from backend.app.schemas.reviews import ReviewResponse
+
 
 class InspectionCreate(BaseModel):
     batch_id: str = Field(..., description="Target production batch UUID")
@@ -32,6 +35,8 @@ class InspectionItemResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    images: Optional[List[ImageResponse]] = None
+    reviews: Optional[List[ReviewResponse]] = None
 
 
 class InspectionResponse(BaseModel):

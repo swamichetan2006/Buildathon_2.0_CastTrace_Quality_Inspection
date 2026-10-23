@@ -1,6 +1,8 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field
+
+from backend.app.schemas.model_runs import ModelRunResponse
 
 
 class ImageResponse(BaseModel):
@@ -21,6 +23,7 @@ class ImageResponse(BaseModel):
     supersede_reason: Optional[str]
     uploaded_by: str
     created_at: datetime
+    model_runs: Optional[List[ModelRunResponse]] = None
 
 
 

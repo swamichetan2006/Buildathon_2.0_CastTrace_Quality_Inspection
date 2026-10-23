@@ -61,17 +61,7 @@ def decode_access_token(token: str) -> dict:
         )
 
 
-def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    if not token:
-        raise AppException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            code="UNAUTHENTICATED",
-            message="Authentication credentials were not provided in request header.",
-        )
-
+def get_user_by_token(token: str, db: Session) -> User:
     payload = decode_access_token(token)
     user_id: Optional[str] = payload.get("sub")
     if not user_id:
@@ -97,6 +87,20 @@ def get_current_user(
         )
 
     return user
+
+
+def get_current_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    if not token:
+        raise AppException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="UNAUTHENTICATED",
+            message="Authentication credentials were not provided in request header.",
+        )
+
+    return get_user_by_token(token, db)
 
 
 def require_roles(allowed_roles: List[str]) -> Callable:

@@ -87,6 +87,7 @@ export interface ImageEvidence {
   surface_location?: string | null;
   is_superseded: boolean;
   superseded_by_id?: string | null;
+  supersede_reason?: string | null;
   created_at: string;
   model_runs?: ModelRun[];
 }

@@ -187,3 +187,95 @@ def test_private_evidence_access_and_supersede(client, inspector_headers, qm_hea
     assert data["is_superseded"] is True
     assert data["superseded_by_id"] == img2_id
     assert data["supersede_reason"] == "Retaken with improved ring light"
+
+
+def test_inspection_item_image_association_and_refresh(client, inspector_headers, test_batch, temp_storage):
+    """Regression test: verifies image association with physical item, inspection detail refresh, and photo counts."""
+    batch_id = test_batch["id"]
+
+    # 1. Create inspection session
+    insp_res = client.post(
+        "/api/v1/inspections",
+        headers=inspector_headers,
+        json={"batch_id": batch_id, "stage": "FINAL_VISUAL", "sampling_plan": "AQL_LEVEL_II"},
+    )
+    assert insp_res.status_code == status.HTTP_201_CREATED
+    insp_id = insp_res.json()["id"]
+
+    # 2. Register physical item
+    items_res = client.post(
+        f"/api/v1/inspections/{insp_id}/items",
+        headers=inspector_headers,
+        json={"items": [{"item_identifier": "ITEM-REGRESSION-001", "cavity_number": 1}]},
+    )
+    assert items_res.status_code == status.HTTP_201_CREATED
+    item_id = items_res.json()[0]["id"]
+
+    # 3. Verify get_inspection returns item with empty images list
+    get_insp = client.get(f"/api/v1/inspections/{insp_id}", headers=inspector_headers)
+    assert get_insp.status_code == status.HTTP_200_OK
+    items = get_insp.json()["items"]
+    assert len(items) == 1
+    assert items[0]["id"] == item_id
+    assert items[0]["images"] == []
+
+    # 4. Upload photo associated with physical item
+    img_res1 = client.post(
+        "/api/v1/images/upload",
+        headers=inspector_headers,
+        data={
+            "batch_id": batch_id,
+            "inspection_item_id": item_id,
+            "image_scope": "ITEM",
+            "surface_location": "SUCTION_EYE",
+            "represented_item_count": 1,
+        },
+        files={"file": ("front_eye.jpg", io.BytesIO(JPEG_HEADER), "image/jpeg")},
+    )
+    assert img_res1.status_code == status.HTTP_201_CREATED
+    img1_data = img_res1.json()
+    assert img1_data["inspection_item_id"] == item_id
+
+    # 5. Verify get_inspection returns the uploaded image associated with the item
+    get_insp2 = client.get(f"/api/v1/inspections/{insp_id}", headers=inspector_headers)
+    assert get_insp2.status_code == status.HTTP_200_OK
+    item_after_up = get_insp2.json()["items"][0]
+    assert len(item_after_up["images"]) == 1
+    assert item_after_up["images"][0]["id"] == img1_data["id"]
+    assert item_after_up["images"][0]["original_filename"] == "front_eye.jpg"
+    assert item_after_up["images"][0]["sha256_hash"] == img1_data["sha256_hash"]
+    assert item_after_up["images"][0]["surface_location"] == "SUCTION_EYE"
+
+    # 6. Upload second photo for same physical item (multi-angle verification)
+    img_res2 = client.post(
+        "/api/v1/images/upload",
+        headers=inspector_headers,
+        data={
+            "batch_id": batch_id,
+            "inspection_item_id": item_id,
+            "image_scope": "SURFACE",
+            "surface_location": "VANE_TIP",
+            "represented_item_count": 1,
+        },
+        files={"file": ("vane_detail.png", io.BytesIO(PNG_HEADER), "image/png")},
+    )
+    assert img_res2.status_code == status.HTTP_201_CREATED
+
+    # 7. Verify count increases to 2
+    get_insp3 = client.get(f"/api/v1/inspections/{insp_id}", headers=inspector_headers)
+    assert get_insp3.status_code == status.HTTP_200_OK
+    item_multi = get_insp3.json()["items"][0]
+    assert len(item_multi["images"]) == 2
+
+    # 8. Upload with non-existent inspection_item_id returns 404
+    bad_item_upload = client.post(
+        "/api/v1/images/upload",
+        headers=inspector_headers,
+        data={
+            "batch_id": batch_id,
+            "inspection_item_id": "00000000-0000-0000-0000-000000000000",
+            "image_scope": "ITEM",
+        },
+        files={"file": ("test.jpg", io.BytesIO(JPEG_HEADER), "image/jpeg")},
+    )
+    assert bad_item_upload.status_code == status.HTTP_404_NOT_FOUND

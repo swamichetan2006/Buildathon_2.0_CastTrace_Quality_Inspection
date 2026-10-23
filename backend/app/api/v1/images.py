@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from backend.app.config import settings
 from backend.app.core.errors import AppException
 from backend.app.core.idempotency import check_idempotency_key, record_idempotency_result
-from backend.app.core.security import get_current_user, require_roles
+from backend.app.core.security import get_current_user, get_user_by_token, oauth2_scheme, require_roles
 from backend.app.database import get_db
 from backend.app.models.entities import Batch, Image, InspectionItem, User
 from backend.app.schemas.images import ImageResponse, ImageSupersedeRequest
@@ -218,9 +218,19 @@ def get_image_metadata(
 )
 def get_image_content(
     image_id: str,
-    current_user: User = Depends(get_current_user),
+    token: Optional[str] = None,
+    header_token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ):
+    active_token = header_token or token
+    if not active_token:
+        raise AppException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="UNAUTHENTICATED",
+            message="Authentication credentials were not provided in request header.",
+        )
+    current_user = get_user_by_token(active_token, db)
+
     image = db.query(Image).filter(Image.id == image_id).first()
     if not image:
         raise AppException(

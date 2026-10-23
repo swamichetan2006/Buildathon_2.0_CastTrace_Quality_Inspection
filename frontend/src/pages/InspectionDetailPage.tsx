@@ -52,6 +52,17 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
   const { data: inspection, isLoading, refetch } = useQuery<Inspection>({
     queryKey: ['inspection', inspectionId],
     queryFn: () => inspectionsApi.get(inspectionId),
+    refetchInterval: (query) => {
+      const currentInspection = query.state.data;
+      if (!currentInspection) return false;
+      const allItems = currentInspection.items || [];
+      const hasPendingRuns = allItems.some((item) =>
+        item.images?.some((img) =>
+          img.model_runs?.some((run) => run.status === 'QUEUED' || run.status === 'PROCESSING')
+        )
+      );
+      return hasPendingRuns ? 1500 : false;
+    },
   });
 
   // Selected item
