@@ -1,7 +1,17 @@
 @import "tailwindcss";
 
+/* ── CastTrace Design Tokens ─────────────────────────────── */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --ct-black:       #101216;
+  --ct-graphite:    #1D232D;
+  --ct-surface:     #252C37;
+  --ct-yellow:      #FBBF24;
+  --ct-yellow-dim:  #D97706;
+  --ct-text:        #F5F5F5;
+  --ct-muted:       #A8B0BD;
+  --ct-border:      rgba(148, 163, 184, 0.20);
+
+  font-family: 'DM Sans', system-ui, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
@@ -10,6 +20,117 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #070b14;
-  color: #f1f5f9;
+  background-color: #101216;
+  color: #F5F5F5;
 }
+
+/* ── Login Page Animations ──────────────────────────────────
+   All animations respect prefers-reduced-motion.
+   ──────────────────────────────────────────────────────────*/
+
+/* Scanning line that sweeps across the impeller */
+@keyframes ct-scan {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { transform: translateY(160%); opacity: 0; }
+}
+
+/* Gentle pulse for inspection markers */
+@keyframes ct-pulse-ring {
+  0%, 100% { transform: scale(1);   opacity: 0.8; }
+  50%       { transform: scale(1.25); opacity: 0.3; }
+}
+
+/* Slow ambient glow breathe */
+@keyframes ct-breathe {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.50; }
+}
+
+/* Fade-in slide-up panel entrance */
+@keyframes ct-fadeup {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero text cascade */
+@keyframes ct-fadein {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Corner brackets draw animation */
+@keyframes ct-bracket-h {
+  from { width: 0; }
+  to   { width: 20px; }
+}
+@keyframes ct-bracket-v {
+  from { height: 0; }
+  to   { height: 20px; }
+}
+
+/* Slow horizontal data ticker */
+@keyframes ct-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Inspection bracket corner flash */
+@keyframes ct-corner-flash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* Subtle slow parallax float */
+@keyframes ct-float {
+  0%, 100% { transform: translateY(0px) scale(1.02); }
+  50%       { transform: translateY(-8px) scale(1.04); }
+}
+
+/* Detail panel shimmer */
+@keyframes ct-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Reduce all motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Login utility classes ───────────────────────────────── */
+.ct-scan-line {
+  animation: ct-scan 5s linear infinite;
+}
+
+.ct-pulse {
+  animation: ct-pulse-ring 2.5s ease-in-out infinite;
+}
+
+.ct-breathe {
+  animation: ct-breathe 4s ease-in-out infinite;
+}
+
+.ct-panel-enter {
+  animation: ct-fadeup 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.ct-hero-enter {
+  animation: ct-fadein 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.ct-ticker {
+  animation: ct-ticker 18s linear infinite;
+}
+
+.ct-float {
+  animation: ct-float 8s ease-in-out infinite;
+}
+

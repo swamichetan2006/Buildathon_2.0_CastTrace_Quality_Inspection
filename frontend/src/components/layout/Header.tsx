@@ -1,94 +1,243 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User as UserIcon, Shield, Sparkles } from 'lucide-react';
+import { LogOut, Bell, Search, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
   currentTab: string;
   onNavigate?: (tab: string) => void;
 }
 
+const TAB_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  products: 'Products Catalog',
+  batches: 'Production Batches',
+  inspections: 'Inspections & AI',
+  defects: 'Defect Registry',
+  capa: 'CAPA & Remediation',
+  'release-gates': 'Batch Release Gates',
+};
+
+/* Role-specific colors */
+const ROLE_COLOR: Record<string, string> = {
+  INSPECTOR: '#2563EB',
+  SUPERVISOR: '#D97706',
+  QUALITY_MANAGER: '#6D28D9',
+  ADMIN: '#6D28D9',
+};
+const ROLE_BG: Record<string, string> = {
+  INSPECTOR: '#EFF6FF',
+  SUPERVISOR: '#FFFBEB',
+  QUALITY_MANAGER: '#F5F3FF',
+  ADMIN: '#F5F3FF',
+};
+
 export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
   const { user, logout, login, isQualityManager, isSupervisor, isInspector } = useAuth();
 
   const handleRoleQuickSwitch = async (roleName: string) => {
-    if (roleName === 'INSPECTOR') {
-      await login('inspector_chen', 'Password123!');
-    } else if (roleName === 'SUPERVISOR') {
-      await login('supervisor_torres', 'Password123!');
-    } else if (roleName === 'QUALITY_MANAGER') {
-      await login('qm_reynolds', 'Password123!');
-    }
+    if (roleName === 'INSPECTOR') await login('inspector_chen', 'Password123!');
+    else if (roleName === 'SUPERVISOR') await login('supervisor_torres', 'Password123!');
+    else if (roleName === 'QUALITY_MANAGER') await login('qm_reynolds', 'Password123!');
   };
 
+  const displayName = user?.full_name || user?.username || '';
+  const initials = displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const roleColor = ROLE_COLOR[user?.role || ''] || '#64748B';
+  const roleBg = ROLE_BG[user?.role || ''] || '#F7F8F6';
+
+  const roleLabel =
+    user?.role === 'INSPECTOR' ? 'Inspector' :
+    user?.role === 'SUPERVISOR' ? 'Supervisor' :
+    user?.role === 'QUALITY_MANAGER' ? 'Quality Manager' :
+    user?.role || '';
+
   return (
-    <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 px-6 flex items-center justify-between">
-      {/* Breadcrumb / Title Context */}
-      <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2 text-sm">
-          <span className="text-slate-400">CastTrace AI</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-white font-semibold capitalize">{currentTab.replace('-', ' ')}</span>
-        </div>
+    <header
+      style={{
+        height: 64,
+        backgroundColor: '#FFFFFF',
+        borderBottom: '1px solid #E7EAE8',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 28px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 40,
+        gap: 16,
+      }}
+    >
+      {/* Search */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        flex: '0 1 320px',
+        backgroundColor: '#F7F8F6',
+        border: '1px solid #E7EAE8',
+        borderRadius: 8,
+        padding: '7px 12px',
+        color: '#8A96A8',
+      }}>
+        <Search size={14} style={{ flexShrink: 0 }} />
+        <span style={{
+          fontSize: 13,
+          fontFamily: "'DM Sans', sans-serif",
+          color: '#8A96A8',
+          userSelect: 'none',
+        }}>
+          Search batches, parts, defects…
+        </span>
+        <span style={{
+          marginLeft: 'auto',
+          fontSize: 10,
+          color: '#B0BAC8',
+          fontFamily: 'monospace',
+          background: '#FFFFFF',
+          border: '1px solid #E7EAE8',
+          borderRadius: 4,
+          padding: '1px 5px',
+        }}>
+          ⌘K
+        </span>
       </div>
 
-      {/* Right controls: Demo Persona Switcher & User Account */}
-      <div className="flex items-center space-x-4">
-        {/* Quick Demo Persona Switcher */}
-        <div className="hidden lg:flex items-center bg-slate-950/70 border border-slate-800 rounded-xl p-1 space-x-1">
-          <span className="text-[10px] uppercase font-bold text-slate-500 px-2 flex items-center space-x-1">
-            <Sparkles className="w-3 h-3 text-teal-400" />
-            <span>Switch Role:</span>
-          </span>
+      {/* Role Switcher */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: '#F7F8F6',
+        border: '1px solid #E7EAE8',
+        borderRadius: 8,
+        padding: '4px',
+        gap: 2,
+      }}>
+        {[
+          { id: 'INSPECTOR', label: 'Inspector', active: isInspector },
+          { id: 'SUPERVISOR', label: 'Supervisor', active: isSupervisor },
+          { id: 'QUALITY_MANAGER', label: 'Quality Manager', active: isQualityManager && !isSupervisor },
+        ].map(({ id, label, active }) => (
           <button
-            onClick={() => handleRoleQuickSwitch('INSPECTOR')}
-            className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-medium ${
-              isInspector ? 'bg-teal-500/20 text-teal-300 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
+            key={id}
+            onClick={() => handleRoleQuickSwitch(id)}
+            style={{
+              padding: '5px 10px',
+              borderRadius: 6,
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontFamily: "'DM Sans', sans-serif",
+              fontWeight: active ? 600 : 400,
+              transition: 'background 0.15s, color 0.15s',
+              backgroundColor: active ? '#FFFFFF' : 'transparent',
+              color: active ? ROLE_COLOR[id] || '#142033' : '#64748B',
+              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.07)' : 'none',
+            }}
           >
-            Inspector
+            {label}
           </button>
-          <button
-            onClick={() => handleRoleQuickSwitch('SUPERVISOR')}
-            className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-medium ${
-              isSupervisor ? 'bg-amber-500/20 text-amber-300 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Supervisor
-          </button>
-          <button
-            onClick={() => handleRoleQuickSwitch('QUALITY_MANAGER')}
-            className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-medium ${
-              isQualityManager ? 'bg-purple-500/20 text-purple-300 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Quality Mgr
-          </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Current User Badge & Profile */}
-        <div className="flex items-center space-x-3 border-l border-slate-800 pl-4">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400">
-              <UserIcon className="w-4 h-4" />
+      {/* Right: Bell + User */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Notifications */}
+        <button
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            border: '1px solid #E7EAE8',
+            backgroundColor: '#FFFFFF',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#64748B',
+            transition: 'background 0.15s, color 0.15s',
+          }}
+          title="Notifications"
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#F7F8F6'; e.currentTarget.style.color = '#142033'; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#64748B'; }}
+        >
+          <Bell size={15} />
+        </button>
+
+        {/* Separator */}
+        <div style={{ width: 1, height: 28, backgroundColor: '#E7EAE8' }} />
+
+        {/* User identity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            backgroundColor: roleBg,
+            border: `1px solid ${roleColor}30`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Manrope', sans-serif",
+            fontWeight: 700,
+            fontSize: 11,
+            color: roleColor,
+            letterSpacing: '0.02em',
+          }}>
+            {initials || 'U'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <div style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: '#142033',
+              fontFamily: "'DM Sans', sans-serif",
+              lineHeight: 1.2,
+            }}>
+              {displayName}
             </div>
-            <div className="text-left hidden sm:block">
-              <div className="text-xs font-semibold text-white leading-tight">{user?.full_name || user?.username}</div>
-              <div className="flex items-center space-x-1 mt-0.5">
-                <Shield className="w-2.5 h-2.5 text-slate-400" />
-                <span className="text-[10px] text-slate-400 font-mono tracking-wider">{user?.role}</span>
-              </div>
+            <div style={{
+              fontSize: 10,
+              color: '#8A96A8',
+              fontFamily: "'DM Sans', sans-serif",
+              lineHeight: 1.2,
+            }}>
+              {roleLabel}
             </div>
           </div>
-
-          <button
-            onClick={logout}
-            title="Log Out"
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 rounded-lg transition-colors cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <ChevronDown size={13} style={{ color: '#8A96A8', marginLeft: 2 }} />
         </div>
+
+        {/* Logout */}
+        <button
+          onClick={logout}
+          title="Log Out"
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 6,
+            border: 'none',
+            backgroundColor: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#8A96A8',
+            transition: 'background 0.15s, color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#8A96A8'; }}
+        >
+          <LogOut size={14} />
+        </button>
       </div>
     </header>
   );
 };
+
+export default Header;

@@ -8,6 +8,7 @@ import { useNotification } from '../context/NotificationContext';
 import Badge from '../components/common/Badge';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
+import { ChevronDown } from 'lucide-react';
 
 interface InspectionsPageProps {
   onSelectInspection: (inspectionId: string) => void;
@@ -206,74 +207,96 @@ export const InspectionsPage: React.FC<InspectionsPageProps> = ({
             });
           }}
           className="space-y-4"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold text-[#142033] mb-1.5">
               Select Production Batch <span className="text-rose-500">*</span>
             </label>
-            <select
-              required
-              value={newBatchId}
-              onChange={(e) => setNewBatchId(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
-            >
-              <option value="" disabled>Select target batch...</option>
-              {batches
-                .filter((b) => b.status !== 'RELEASED' && b.status !== 'SCRAPPED')
-                .map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.batch_number} — {b.product?.name || 'Impeller'} ({b.declared_quantity} units)
-                  </option>
-                ))}
-            </select>
+            <div className="relative">
+              <select
+                required
+                value={newBatchId}
+                onChange={(e) => setNewBatchId(e.target.value)}
+                style={{ colorScheme: 'light', color: '#142033', backgroundColor: '#FFFFFF' }}
+                className="w-full px-3.5 py-2.5 text-sm text-[#142033] bg-white border border-[#D9E0E8] rounded-xl focus:outline-none focus:border-[#FBBF24] focus:ring-2 focus:ring-[#FBBF24]/30 transition-all appearance-none pr-9 cursor-pointer"
+              >
+                <option value="" disabled className="text-[#94A3B8] bg-white" style={{ color: '#94A3B8', backgroundColor: '#FFFFFF' }}>
+                  Select target batch...
+                </option>
+                {batches
+                  .filter((b) => b.status !== 'RELEASED' && b.status !== 'SCRAPPED')
+                  .map((b) => (
+                    <option key={b.id} value={b.id} className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>
+                      {b.batch_number} — {b.product?.name || 'Impeller'} ({b.declared_quantity} units)
+                    </option>
+                  ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B]">
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-semibold text-[#142033] mb-1.5">
                 Inspection Stage
               </label>
-              <select
-                value={newStage}
-                onChange={(e) => setNewStage(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
-              >
-                <option value="FINAL_VISUAL">FINAL_VISUAL</option>
-                <option value="RECEIVING">RECEIVING</option>
-                <option value="POST_FETTLING">POST_FETTLING</option>
-                <option value="MACHINED">MACHINED</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={newStage}
+                  onChange={(e) => setNewStage(e.target.value)}
+                  style={{ colorScheme: 'light', color: '#142033', backgroundColor: '#FFFFFF' }}
+                  className="w-full px-3.5 py-2.5 text-sm text-[#142033] bg-white border border-[#D9E0E8] rounded-xl focus:outline-none focus:border-[#FBBF24] focus:ring-2 focus:ring-[#FBBF24]/30 transition-all appearance-none pr-9 cursor-pointer"
+                >
+                  <option value="FINAL_VISUAL" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>FINAL_VISUAL</option>
+                  <option value="RECEIVING" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>RECEIVING</option>
+                  <option value="POST_FETTLING" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>POST_FETTLING</option>
+                  <option value="MACHINED" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>MACHINED</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B]">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-semibold text-[#142033] mb-1.5">
                 Sampling Plan
               </label>
-              <select
-                value={newSamplingPlan}
-                onChange={(e) => setNewSamplingPlan(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
-              >
-                <option value="AQL_LEVEL_II">AQL_LEVEL_II (Standard)</option>
-                <option value="100_PERCENT">100_PERCENT (Full Population)</option>
-                <option value="SPOT_CHECK">SPOT_CHECK (Triage)</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={newSamplingPlan}
+                  onChange={(e) => setNewSamplingPlan(e.target.value)}
+                  style={{ colorScheme: 'light', color: '#142033', backgroundColor: '#FFFFFF' }}
+                  className="w-full px-3.5 py-2.5 text-sm text-[#142033] bg-white border border-[#D9E0E8] rounded-xl focus:outline-none focus:border-[#FBBF24] focus:ring-2 focus:ring-[#FBBF24]/30 transition-all appearance-none pr-9 cursor-pointer"
+                >
+                  <option value="AQL_LEVEL_II" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>AQL_LEVEL_II (Standard)</option>
+                  <option value="100_PERCENT" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>100_PERCENT (Full Population)</option>
+                  <option value="SPOT_CHECK" className="text-[#142033] bg-white" style={{ color: '#142033', backgroundColor: '#FFFFFF' }}>SPOT_CHECK (Triage)</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#64748B]">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold text-[#142033] mb-1.5">
               Inspection Shift Notes
             </label>
             <textarea
-              rows={2}
+              rows={3}
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
               placeholder="Inspection workstation, lighting conditions, calibrated optical setup..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              style={{ colorScheme: 'light', color: '#142033', backgroundColor: '#FFFFFF' }}
+              className="w-full px-3.5 py-2.5 text-sm text-[#142033] placeholder-[#94A3B8] bg-white border border-[#D9E0E8] rounded-xl focus:outline-none focus:border-[#FBBF24] focus:ring-2 focus:ring-[#FBBF24]/30 transition-all resize-none"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E7EAE8]">
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)} type="button">
               Cancel
             </Button>

@@ -21,11 +21,14 @@ export const AppShell: React.FC<AppShellProps> = ({
   const handleNav = onNavigate || onTabChange || (() => {});
 
   return (
-    <div className="flex h-screen bg-[#070b14] text-slate-100 font-sans overflow-hidden">
+    <div className="flex h-screen font-sans overflow-hidden" style={{ backgroundColor: '#F7F8F6', color: '#142033' }}>
       <Sidebar currentTab={active} onNavigate={handleNav} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header currentTab={active} onNavigate={handleNav} />
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-[#070b14]">
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ backgroundColor: '#F7F8F6', padding: '28px 32px' }}
+        >
           <div className="max-w-7xl mx-auto w-full">{children}</div>
         </main>
       </div>

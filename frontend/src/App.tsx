@@ -13,7 +13,6 @@ import InspectionDetailPage from './pages/InspectionDetailPage';
 import DefectsPage from './pages/DefectsPage';
 import CAPAPage from './pages/CAPAPage';
 import ReleaseGatesPage from './pages/ReleaseGatesPage';
-import HealthPage from './pages/HealthPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -156,8 +155,6 @@ function MainRouter() {
           onNavigateToCapa={(cId) => handleNavigateToCapa(cId)}
         />
       )}
-
-      {activeTab === 'health' && <HealthPage />}
     </AppShell>
   );
 }
