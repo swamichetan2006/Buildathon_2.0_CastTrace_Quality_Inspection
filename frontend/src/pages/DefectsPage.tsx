@@ -11,11 +11,13 @@ import Modal from '../components/common/Modal';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 
 interface DefectsPageProps {
+  initialDefectId?: string;
   onNavigateToCapa?: (defectId?: string) => void;
   onNavigateToBatch?: (batchId: string) => void;
 }
 
 export const DefectsPage: React.FC<DefectsPageProps> = ({
+  initialDefectId,
   onNavigateToCapa,
   onNavigateToBatch: _onNavigateToBatch,
 }) => {
@@ -26,7 +28,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialDefectId || '');
 
   // Lineage modal state
   const [lineageDefect, setLineageDefect] = useState<Defect | null>(null);
@@ -116,8 +118,8 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Defect Tracking & Lineage</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Defect Tracking & Lineage</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Authoritative 9-category taxonomy, recurrence chains, and root-cause linkage.
           </p>
         </div>
@@ -131,7 +133,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
             placeholder="Search defect ID, number or description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+            className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500 shadow-sm"
           />
         </div>
 
@@ -139,7 +141,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm font-medium border border-slate-700 rounded-lg bg-slate-950 shadow-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="ALL">All Categories</option>
             {DEFECT_CATEGORIES.map((cat) => (
@@ -154,7 +156,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm font-medium border border-slate-700 rounded-lg bg-slate-950 shadow-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="ALL">All Severities</option>
             <option value="CRITICAL">Critical</option>
@@ -167,7 +169,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="w-full px-3 py-2 text-sm font-medium border border-slate-700 rounded-lg bg-slate-950 shadow-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             <option value="ALL">All Statuses</option>
             <option value="OPEN">Open</option>
@@ -181,18 +183,18 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
       </div>
 
       {/* Defects Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-sm overflow-hidden backdrop-blur-sm">
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">Loading defect records...</div>
+          <div className="p-8 text-center text-slate-400">Loading defect records...</div>
         ) : filteredDefects.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <p className="font-semibold text-slate-700">No defects found</p>
+          <div className="p-12 text-center text-slate-400">
+            <p className="font-semibold text-white">No defects found</p>
             <p className="text-sm mt-1">All criteria satisfied or no matching defects in this view.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/70 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
                 <tr>
                   <th className="px-6 py-3">Defect Number</th>
                   <th className="px-6 py-3">Taxonomy Category</th>
@@ -203,15 +205,26 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
                   <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/60">
                 {filteredDefects.map((def) => {
                   const hasLineage = Boolean(def.prior_defect_id);
+                  const isSelected = Boolean(
+                    initialDefectId &&
+                      (def.id === initialDefectId || def.defect_number === initialDefectId)
+                  );
                   return (
-                    <tr key={def.id} className="hover:bg-slate-50 transition">
-                      <td className="px-6 py-4 font-mono font-medium text-slate-900">
+                    <tr
+                      key={def.id}
+                      className={
+                        isSelected
+                          ? 'bg-cyan-950/40 ring-1 ring-cyan-500 transition'
+                          : 'hover:bg-slate-800/50 transition'
+                      }
+                    >
+                      <td className="px-6 py-4 font-mono font-medium text-white">
                         {def.defect_number || def.id.slice(0, 10)}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-slate-800">
+                      <td className="px-6 py-4 font-semibold text-slate-200">
                         {def.category.replace(/_/g, ' ')}
                       </td>
                       <td className="px-6 py-4">
@@ -224,22 +237,22 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
                         {hasLineage ? (
                           <button
                             onClick={() => setLineageDefect(def)}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 hover:bg-amber-200"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-amber-950/50 text-amber-300 border border-amber-800/60 hover:bg-amber-900/60 transition"
                           >
                             <span>🔁 Recurrent Chain</span>
                           </button>
                         ) : (
-                          <span className="text-xs text-slate-400 font-mono">Original Instance</span>
+                          <span className="text-xs text-slate-500 font-mono">Original Instance</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-xs text-slate-500">
+                      <td className="px-6 py-4 text-xs text-slate-400">
                         {new Date(def.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
                         {/* Open Lineage */}
                         <button
                           onClick={() => setLineageDefect(def)}
-                          className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                          className="text-xs font-semibold text-slate-300 hover:text-white transition"
                         >
                           Lineage
                         </button>
@@ -248,7 +261,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
                         {onNavigateToCapa && def.status !== 'RESOLVED' && (
                           <button
                             onClick={() => onNavigateToCapa(def.id)}
-                            className="text-xs font-semibold text-sky-600 hover:text-sky-800"
+                            className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 transition"
                           >
                             Assign CAPA
                           </button>
@@ -263,7 +276,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
                               setEditLocation(def.surface_location || '');
                               setEditDescription(def.description || '');
                             }}
-                            className="text-xs font-semibold px-2 py-1 bg-slate-100 hover:bg-slate-200 rounded text-slate-700"
+                            className="text-xs font-semibold px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded border border-slate-700 transition"
                           >
                             Edit
                           </button>
@@ -276,7 +289,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
                               setReopenDefect(def);
                               setReopenReason('');
                             }}
-                            className="text-xs font-semibold px-2 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded border border-rose-200"
+                            className="text-xs font-semibold px-2 py-1 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 rounded border border-rose-800 transition"
                           >
                             Reopen Defect
                           </button>
@@ -299,20 +312,20 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
           title={`Defect Lineage & History: ${lineageDefect.defect_number || lineageDefect.id.slice(0, 10)}`}
         >
           <div className="space-y-4">
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs">
-              <span className="font-semibold text-slate-700 block">Category & Severity:</span>
+            <div className="p-3 bg-slate-950/60 rounded-lg border border-slate-800 text-xs">
+              <span className="font-semibold text-slate-300 block">Category & Severity:</span>
               <div className="flex items-center gap-2 mt-1">
-                <span className="font-bold text-slate-900">{lineageDefect.category}</span>
+                <span className="font-bold text-white">{lineageDefect.category}</span>
                 <Badge status={lineageDefect.severity} size="sm" />
                 <Badge status={lineageDefect.status} size="sm" />
               </div>
               {lineageDefect.description && (
-                <p className="mt-2 text-slate-600">{lineageDefect.description}</p>
+                <p className="mt-2 text-slate-400">{lineageDefect.description}</p>
               )}
             </div>
 
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
                 Recurrence Ancestry Chain
               </h4>
               {lineageHistory.length === 0 ? (
@@ -324,21 +337,21 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
                   {lineageHistory.map((item, idx) => (
                     <div
                       key={item.id}
-                      className="p-3 bg-white border border-slate-200 rounded-lg text-xs space-y-1"
+                      className="p-3 bg-slate-950 border border-slate-800 rounded-lg text-xs space-y-1"
                     >
-                      <div className="flex items-center justify-between font-mono font-medium">
+                      <div className="flex items-center justify-between font-mono font-medium text-white">
                         <span>
                           #{idx + 1} {item.defect_number || item.id.slice(0, 10)}
                         </span>
                         <Badge status={item.status} size="sm" />
                       </div>
-                      <div className="text-slate-500">
-                        Category: {item.category} • Logged:{' '}
+                      <div className="text-slate-400">
+                        Category: <span className="text-slate-200">{item.category}</span> • Logged:{' '}
                         {new Date(item.created_at).toLocaleDateString()}
                       </div>
                       {item.resolution_notes && (
-                        <div className="text-slate-700 bg-slate-50 p-2 rounded">
-                          <span className="font-semibold">Resolution Notes:</span>{' '}
+                        <div className="text-slate-300 bg-slate-900/90 p-2 rounded border border-slate-800">
+                          <span className="font-semibold text-slate-200">Resolution Notes:</span>{' '}
                           {item.resolution_notes}
                         </div>
                       )}
@@ -348,7 +361,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
               )}
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-100">
+            <div className="flex justify-end pt-3 border-t border-slate-800">
               <Button variant="secondary" onClick={() => setLineageDefect(null)}>
                 Close
               </Button>
@@ -377,8 +390,8 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
         }}
       >
         <div className="mt-3">
-          <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-            Reason for Reopening <span className="text-rose-500">*</span>
+          <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+            Reason for Reopening <span className="text-rose-400">*</span>
           </label>
           <textarea
             required
@@ -386,7 +399,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
             value={reopenReason}
             onChange={(e) => setReopenReason(e.target.value)}
             placeholder="Explain why the previously resolved defect has re-emerged..."
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 bg-slate-950 text-white placeholder-slate-500"
           />
         </div>
       </ConfirmDialog>
@@ -412,13 +425,13 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
               Severity Level
             </label>
             <select
               value={editSeverity}
               onChange={(e) => setEditSeverity(e.target.value as DefectSeverity)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white"
             >
               <option value="CRITICAL">CRITICAL</option>
               <option value="MAJOR">MAJOR</option>
@@ -427,7 +440,7 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
               Surface Location
             </label>
             <input
@@ -435,12 +448,12 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
               placeholder="e.g. SUCTION_EYE"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
               Description Notes
             </label>
             <textarea
@@ -448,11 +461,11 @@ export const DefectsPage: React.FC<DefectsPageProps> = ({
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               placeholder="Visual or metallurgical defect description..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setUpdateDefect(null)} type="button">
               Cancel
             </Button>

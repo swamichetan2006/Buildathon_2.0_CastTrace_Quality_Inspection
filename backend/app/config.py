@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Union
+from typing import List, Optional, Union
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -25,12 +25,17 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 
     DATABASE_URL: str = "sqlite:///./casttrace.db"
+    TEST_DATABASE_URL: Optional[str] = None
     STORAGE_DIR: str = "./storage/evidence"
     MAX_UPLOAD_SIZE_BYTES: int = 10485760  # 10 MB
 
     ML_ARTIFACTS_DIR: str = "ml/artifacts"
     MODEL_METADATA_FILE: str = "model_metadata.json"
     WORKER_POLL_INTERVAL: float = 1.0
+
+    # Generative AI (Gemini)
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-flash-lite-latest"
 
     BACKEND_CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost:5173",

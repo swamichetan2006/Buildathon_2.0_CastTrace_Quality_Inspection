@@ -7,6 +7,8 @@ import {
   AlertOctagon,
   Wrench,
   ShieldCheck,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,13 +28,15 @@ const CastTraceMark: React.FC<{ size?: number }> = ({ size = 30 }) => (
 export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onNavigate }) => {
 
   const navItems = [
-    { id: 'dashboard',     label: 'Dashboard',           icon: <LayoutDashboard className="w-4 h-4" />, allowed: true },
-    { id: 'products',      label: 'Products Catalog',    icon: <Package className="w-4 h-4" />,         allowed: true },
-    { id: 'batches',       label: 'Production Batches',  icon: <Layers className="w-4 h-4" />,          allowed: true },
-    { id: 'inspections',   label: 'Inspections & AI',    icon: <FileCheck2 className="w-4 h-4" />,      allowed: true },
-    { id: 'defects',       label: 'Defect Registry',     icon: <AlertOctagon className="w-4 h-4" />,    allowed: true },
-    { id: 'capa',          label: 'CAPA & Remediation',  icon: <Wrench className="w-4 h-4" />,          allowed: true },
-    { id: 'release-gates', label: 'Batch Release Gates', icon: <ShieldCheck className="w-4 h-4" />,     allowed: true },
+    { id: 'dashboard',            label: 'Dashboard',            icon: <LayoutDashboard className="w-4 h-4" />, allowed: true },
+    { id: 'products',             label: 'Products Catalog',     icon: <Package className="w-4 h-4" />,         allowed: true },
+    { id: 'batches',              label: 'Production Batches',   icon: <Layers className="w-4 h-4" />,          allowed: true },
+    { id: 'inspections',          label: 'Inspections & AI',     icon: <FileCheck2 className="w-4 h-4" />,      allowed: true },
+    { id: 'defects',              label: 'Defect Registry',      icon: <AlertOctagon className="w-4 h-4" />,    allowed: true },
+    { id: 'capa',                 label: 'CAPA & Remediation',   icon: <Wrench className="w-4 h-4" />,          allowed: true },
+    { id: 'release-gates',        label: 'Batch Release Gates',  icon: <ShieldCheck className="w-4 h-4" />,     allowed: true },
+    { id: 'quality-intelligence', label: 'Quality Intelligence', icon: <Sparkles className="w-4 h-4" />,        allowed: true },
+    { id: 'health',               label: 'System Diagnostics',   icon: <Activity className="w-4 h-4" />,        allowed: true },
   ];
 
   return (

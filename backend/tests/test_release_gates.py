@@ -13,6 +13,7 @@ from backend.app.models.entities import (
     InspectionItem,
     Image,
     ModelRun,
+    ModelVersion,
     Review,
     Defect,
     CorrectiveAction,
@@ -77,6 +78,21 @@ def phase4c_setup(db_session):
         is_archived=False,
     )
     db_session.add(product)
+
+    # Seed model version for FK integrity on PostgreSQL
+    mv = db_session.query(ModelVersion).filter(ModelVersion.id == "mv-resnet18-v1").first()
+    if not mv:
+        mv = ModelVersion(
+            id="mv-resnet18-v1",
+            version_name="v1.0.0-resnet18",
+            model_architecture="ResNet-18",
+            weights_path="ml/artifacts/model_best.pt",
+            training_dataset_info={"source": "test_dataset"},
+            metrics={"accuracy": 1.0},
+            is_active=True,
+        )
+        db_session.add(mv)
+
     db_session.commit()
     db_session.refresh(product)
 

@@ -10,14 +10,15 @@ from backend.app.config import settings
 from backend.app.core.security import create_access_token, hash_password
 from backend.app.database import Base, get_db
 from backend.app.main import app
-from backend.app.models.entities import User
+from backend.app.models.entities import User, ModelVersion
 
-# Test database URL
-TEST_DATABASE_URL = "sqlite:///./casttrace_test.db"
+# Test database URL (defaults to isolated SQLite file, or dedicated PostgreSQL test database)
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or settings.TEST_DATABASE_URL or "sqlite:///./casttrace_test.db"
 
+test_connect_args = {"check_same_thread": False} if TEST_DATABASE_URL.startswith("sqlite") else {}
 test_engine = create_engine(
     TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    connect_args=test_connect_args,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
@@ -25,9 +26,25 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
     Base.metadata.create_all(bind=test_engine)
+    with TestingSessionLocal() as session:
+        mv = session.query(ModelVersion).filter(
+            (ModelVersion.id == "mv-resnet18-v1") | (ModelVersion.version_name == "v1.0.0-resnet18")
+        ).first()
+        if not mv:
+            mv = ModelVersion(
+                id="mv-resnet18-v1",
+                version_name="v1.0.0-resnet18",
+                model_architecture="ResNet-18",
+                weights_path="ml/artifacts/model_best.pt",
+                training_dataset_info={"source": "test_dataset"},
+                metrics={"accuracy": 1.0},
+                is_active=True,
+            )
+            session.add(mv)
+            session.commit()
     yield
     Base.metadata.drop_all(bind=test_engine)
-    if os.path.exists("./casttrace_test.db"):
+    if TEST_DATABASE_URL.startswith("sqlite") and os.path.exists("./casttrace_test.db"):
         try:
             os.remove("./casttrace_test.db")
         except OSError:

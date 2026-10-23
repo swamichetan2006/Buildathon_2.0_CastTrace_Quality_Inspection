@@ -1,7 +1,7 @@
 from typing import Optional, List
 from fastapi import APIRouter, Depends, Header, Request, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, or_
 
 from backend.app.core.errors import AppException
 from backend.app.core.idempotency import check_idempotency_key, record_idempotency_result
@@ -77,7 +77,7 @@ def get_corrective_action_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> CorrectiveActionResponse:
-    action = db.get(CorrectiveAction, id)
+    action = db.query(CorrectiveAction).filter(or_(CorrectiveAction.id == id, CorrectiveAction.action_number == id)).first()
     if not action:
         raise AppException(
             status_code=status.HTTP_404_NOT_FOUND,

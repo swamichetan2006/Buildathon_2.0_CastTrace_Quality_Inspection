@@ -24,8 +24,8 @@ export const HealthPage: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Diagnostics & Health</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-white tracking-tight">System Diagnostics & Health</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Service status, SQLite database connectivity, and ML inference worker monitoring.
           </p>
         </div>
@@ -36,54 +36,54 @@ export const HealthPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Core API Service */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3 backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">FastAPI Core Service</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">FastAPI Core Service</span>
             <span className="flex h-2.5 w-2.5 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
           </div>
-          <div className="text-2xl font-bold text-slate-900">
+          <div className="text-2xl font-bold text-white">
             {isLoading ? 'Checking...' : error ? 'Unavailable' : 'Operational'}
           </div>
-          <p className="text-xs text-slate-500">REST API & Auth endpoints responsive</p>
+          <p className="text-xs text-slate-400">REST API & Auth endpoints responsive</p>
         </div>
 
         {/* Database Engine */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3 backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Storage Engine</span>
-            <span className="text-xs font-mono font-bold text-slate-600">SQLite Local</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage Engine</span>
+            <span className="text-xs font-mono font-bold text-cyan-400">PostgreSQL / SQLite</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900">Connected</div>
-          <p className="text-xs text-slate-500">
-            Schema verified with Alembic Phase 4C release gate snapshots
+          <div className="text-2xl font-bold text-white">Connected</div>
+          <p className="text-xs text-slate-400">
+            Schema verified with Alembic release gate snapshots
           </p>
         </div>
 
         {/* ML Inference Worker */}
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3 backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">ML Model Service</span>
-            <span className="text-xs font-mono font-bold text-slate-600">ResNet-18</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">ML Model Service</span>
+            <span className="text-xs font-mono font-bold text-cyan-400">ResNet-18</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900">Frozen Baseline</div>
-          <p className="text-xs text-slate-500">197 held-out validation dataset evaluated</p>
+          <div className="text-2xl font-bold text-white">Frozen Baseline</div>
+          <p className="text-xs text-slate-400">197 held-out validation dataset evaluated</p>
         </div>
       </div>
 
       {/* Raw Health JSON Response */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3 backdrop-blur-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-600">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
             Probe Response Payload (/health)
           </h3>
           <span className="text-xs text-slate-400">
             Polled at: {lastCheck}
           </span>
         </div>
-        <pre className="bg-slate-900 text-slate-100 font-mono text-xs p-4 rounded-lg overflow-x-auto">
+        <pre className="bg-slate-950 text-slate-200 font-mono text-xs p-4 rounded-lg overflow-x-auto border border-slate-800">
           {isLoading
             ? 'Querying probe...'
             : error

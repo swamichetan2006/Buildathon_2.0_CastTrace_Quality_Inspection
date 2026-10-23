@@ -72,8 +72,8 @@ export const InspectionsPage: React.FC<InspectionsPageProps> = ({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Physical Inspections</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Physical Inspections</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Inspection lots, physical items registration, evidence photography, and AI routing.
           </p>
         </div>
@@ -95,7 +95,7 @@ export const InspectionsPage: React.FC<InspectionsPageProps> = ({
             placeholder="Search by inspection ID, number, or batch ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+            className="w-full pl-10 pr-4 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500 shadow-sm"
           />
           <svg
             className="w-4 h-4 text-slate-400 absolute left-3 top-3"
@@ -110,7 +110,7 @@ export const InspectionsPage: React.FC<InspectionsPageProps> = ({
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="px-3 py-2 text-sm font-medium border border-slate-700 rounded-lg bg-slate-950 shadow-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         >
           <option value="ALL">All Inspection Statuses</option>
           <option value="DRAFT">Draft</option>
@@ -122,24 +122,24 @@ export const InspectionsPage: React.FC<InspectionsPageProps> = ({
 
         <button
           onClick={() => refetch()}
-          className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition shadow-sm"
+          className="px-3 py-2 text-sm font-medium text-slate-200 bg-slate-800/80 border border-slate-700 rounded-lg hover:bg-slate-700 hover:text-white transition shadow-sm"
         >
           Refresh
         </button>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-sm overflow-hidden backdrop-blur-sm">
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">Loading inspections...</div>
+          <div className="p-8 text-center text-slate-400">Loading inspections...</div>
         ) : filteredInspections.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <p className="font-semibold text-slate-700">No inspections found</p>
+          <div className="p-12 text-center text-slate-400">
+            <p className="font-semibold text-white">No inspections found</p>
             <p className="text-sm mt-1">Select a different filter or initiate an inspection session.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/70 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
                 <tr>
                   <th className="px-6 py-3">Inspection Number</th>
                   <th className="px-6 py-3">Batch ID</th>
@@ -149,20 +149,20 @@ export const InspectionsPage: React.FC<InspectionsPageProps> = ({
                   <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/60">
                 {filteredInspections.map((ins) => (
-                  <tr key={ins.id} className="hover:bg-slate-50 transition">
-                    <td className="px-6 py-4 font-mono font-medium text-slate-900">
+                  <tr key={ins.id} className="hover:bg-slate-800/50 transition">
+                    <td className="px-6 py-4 font-mono font-medium text-white">
                       {ins.inspection_number || ins.id.slice(0, 8)}
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-700">
+                    <td className="px-6 py-4 font-mono text-cyan-400">
                       {ins.batch_id.slice(0, 8)}...
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
-                      <span className="font-medium text-slate-800">{ins.stage}</span>{' '}
+                    <td className="px-6 py-4 text-slate-300">
+                      <span className="font-medium text-slate-200">{ins.stage}</span>{' '}
                       <span className="text-xs text-slate-400">({ins.sampling_plan})</span>
                     </td>
-                    <td className="px-6 py-4 text-slate-700">
+                    <td className="px-6 py-4 text-slate-300">
                       {ins.items?.length || 0} registered unit(s)
                     </td>
                     <td className="px-6 py-4">

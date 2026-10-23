@@ -10,6 +10,7 @@ from backend.app.models.entities import (
     Image,
     ModelRun,
     ModelVersion,
+    User,
 )
 from backend.app.services.aggregation_service import (
     get_current_model_run_for_image,
@@ -76,10 +77,15 @@ def test_setup(db_session, seeded_users):
         "inspection": insp,
         "item": item,
         "version": ver,
+        "inspector": inspector,
     }
 
 
 def create_image(db_session, batch_id, item_id, filename="img.jpg", is_superseded=False, scope="ITEM", uploaded_by=None):
+    if not uploaded_by:
+        user = db_session.query(User).first()
+        uploaded_by = user.id if user else str(uuid.uuid4())
+
     img = Image(
         id=str(uuid.uuid4()),
         batch_id=batch_id,
@@ -91,7 +97,7 @@ def create_image(db_session, batch_id, item_id, filename="img.jpg", is_supersede
         file_size_bytes=1024,
         sha256_hash=uuid.uuid4().hex + uuid.uuid4().hex,
         is_superseded=is_superseded,
-        uploaded_by=uploaded_by or str(uuid.uuid4()),
+        uploaded_by=uploaded_by,
     )
     db_session.add(img)
     db_session.flush()

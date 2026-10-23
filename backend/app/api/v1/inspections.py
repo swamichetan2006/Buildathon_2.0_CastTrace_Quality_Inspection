@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, Query, Request, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend.app.core.errors import AppException
@@ -141,7 +142,7 @@ def get_inspection(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> InspectionResponse:
-    inspection = db.query(Inspection).filter(Inspection.id == inspection_id).first()
+    inspection = db.query(Inspection).filter(or_(Inspection.id == inspection_id, Inspection.inspection_number == inspection_id)).first()
     if not inspection:
         raise AppException(
             status_code=status.HTTP_404_NOT_FOUND,

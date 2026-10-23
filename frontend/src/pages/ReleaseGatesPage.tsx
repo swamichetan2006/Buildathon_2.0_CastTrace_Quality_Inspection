@@ -6,6 +6,7 @@ import ReleaseGateCard from '../components/domain/ReleaseGateCard';
 import Badge from '../components/common/Badge';
 
 interface ReleaseGatesPageProps {
+  initialBatchId?: string;
   onSelectBatch: (batchId: string) => void;
   onNavigateToInspection?: (inspectionId: string) => void;
   onNavigateToDefect?: (defectId: string) => void;
@@ -13,6 +14,7 @@ interface ReleaseGatesPageProps {
 }
 
 export const ReleaseGatesPage: React.FC<ReleaseGatesPageProps> = ({
+  initialBatchId,
   onSelectBatch,
   onNavigateToInspection,
   onNavigateToDefect,
@@ -25,34 +27,41 @@ export const ReleaseGatesPage: React.FC<ReleaseGatesPageProps> = ({
     queryFn: () => batchesApi.list(),
   });
 
-  const activeBatchId = selectedBatchId || (batches.length > 0 ? batches[0].id : '');
-  const activeBatch = batches.find((b) => b.id === activeBatchId);
+  const activeBatch =
+    batches.find(
+      (b) =>
+        b.id === selectedBatchId ||
+        b.batch_number === selectedBatchId ||
+        (initialBatchId && (b.id === initialBatchId || b.batch_number === initialBatchId))
+    ) || (batches.length > 0 ? batches[0] : undefined);
+
+  const activeBatchId = activeBatch ? activeBatch.id : '';
 
   return (
     <div className="space-y-6">
       {/* Title */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+        <h1 className="text-2xl font-bold text-white tracking-tight">
           Batch Release Governance Portal
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-400 mt-1">
           Phase 4C Release Gates, automated blocker verification, Four-Eyes audit checks, and official Quality Manager decisions.
         </p>
       </div>
 
       {/* Lot selector bar */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex-1 max-w-md">
-          <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+          <label className="block text-xs font-mono font-bold uppercase text-slate-300 mb-1.5 tracking-wider">
             Select Production Lot / Batch
           </label>
           <select
             value={activeBatchId}
             onChange={(e) => setSelectedBatchId(e.target.value)}
-            className="w-full px-3 py-2 text-sm font-semibold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+            className="w-full px-3.5 py-2.5 text-sm font-semibold font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white cursor-pointer shadow-inner"
           >
             {batches.map((b) => (
-              <option key={b.id} value={b.id}>
+              <option key={b.id} value={b.id} className="bg-slate-900 text-white py-1">
                 {b.batch_number} — {b.product?.name || 'Impeller'} ({b.status})
               </option>
             ))}
@@ -64,7 +73,7 @@ export const ReleaseGatesPage: React.FC<ReleaseGatesPageProps> = ({
             <Badge status={activeBatch.status} />
             <button
               onClick={() => onSelectBatch(activeBatch.id)}
-              className="text-xs font-semibold px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-300 transition"
+              className="text-xs font-semibold px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition cursor-pointer"
             >
               Full Batch Details →
             </button>
@@ -81,7 +90,7 @@ export const ReleaseGatesPage: React.FC<ReleaseGatesPageProps> = ({
           onNavigateToCapa={onNavigateToCapa}
         />
       ) : (
-        <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-xl">
+        <div className="p-12 text-center text-slate-400 bg-slate-900/50 border border-slate-800 rounded-2xl font-mono">
           {isLoading ? 'Loading batches...' : 'No batches available for release evaluation.'}
         </div>
       )}

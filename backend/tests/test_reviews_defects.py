@@ -552,6 +552,19 @@ def test_multi_image_review_snapshot_capture_and_immutability(
 
     # Model Version
     ver = db_session.query(ModelVersion).filter(ModelVersion.version_name == "v1.0.0-resnet18").first()
+    if not ver:
+        ver = ModelVersion(
+            id="mv-resnet18-v1",
+            version_name="v1.0.0-resnet18",
+            model_architecture="ResNet-18",
+            weights_path="ml/artifacts/model_best.pt",
+            training_dataset_info={"source": "test_dataset"},
+            metrics={"accuracy": 1.0},
+            is_active=True,
+        )
+        db_session.add(ver)
+        db_session.commit()
+        db_session.refresh(ver)
 
     # 2. Upload 3 distinct images for this single physical item
     images = []

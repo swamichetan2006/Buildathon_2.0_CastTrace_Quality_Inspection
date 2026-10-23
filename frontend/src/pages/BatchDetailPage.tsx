@@ -183,16 +183,16 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
       </div>
 
       {/* Batch Overview Banner */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold font-mono text-slate-900">{batch.batch_number}</h1>
+              <h1 className="text-2xl font-bold font-mono text-white">{batch.batch_number}</h1>
               <Badge status={batch.status} />
             </div>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               Part:{' '}
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-white">
                 {batch.product?.name || 'Pump Impeller'}
               </span>{' '}
               {batch.product?.sku && (
@@ -202,26 +202,26 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
               )}
               <span className="mx-2">•</span>
               Declared Lot Size:{' '}
-              <span className="font-mono font-medium text-slate-800">{batch.declared_quantity} units</span>
+              <span className="font-mono font-medium text-slate-200">{batch.declared_quantity} units</span>
               {batch.heat_number && (
                 <>
                   <span className="mx-2">•</span>
-                  Heat: <span className="font-mono font-medium text-slate-800">{batch.heat_number}</span>
+                  Heat: <span className="font-mono font-medium text-slate-200">{batch.heat_number}</span>
                 </>
               )}
             </p>
           </div>
 
-          <div className="text-xs text-slate-400 text-left md:text-right space-y-0.5">
+          <div className="text-xs text-slate-400 text-left md:text-right space-y-0.5 font-mono">
             <div>
               Manufacture Date:{' '}
-              <span className="text-slate-600 font-medium">
+              <span className="text-slate-300 font-medium">
                 {new Date(batch.manufacture_date).toLocaleDateString()}
               </span>
             </div>
             <div>
               Created:{' '}
-              <span className="text-slate-600 font-medium">
+              <span className="text-slate-300 font-medium">
                 {new Date(batch.created_at).toLocaleString()}
               </span>
             </div>
@@ -229,8 +229,8 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
         </div>
 
         {batch.notes && (
-          <div className="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600 bg-slate-50 p-3 rounded-lg">
-            <span className="font-semibold uppercase tracking-wider text-slate-500 block mb-1">
+          <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-300 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+            <span className="font-mono font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Manufacturing & Shift Notes:
             </span>
             {batch.notes}
@@ -247,36 +247,36 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
       />
 
       {/* Linked Inspections Section */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Physical Inspection Sessions</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-base font-bold text-white">Physical Inspection Sessions</h2>
+            <p className="text-xs text-slate-400">
               Inspection lots and physical impeller units submitted for QA verification.
             </p>
           </div>
         </div>
 
         {inspections.length === 0 ? (
-          <div className="p-6 text-center text-slate-400 text-sm border border-dashed border-slate-200 rounded-lg">
+          <div className="p-6 text-center text-slate-400 text-sm border border-dashed border-slate-800 rounded-xl bg-slate-950/40 font-mono">
             No inspection sessions recorded yet for this batch.
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
+          <div className="divide-y divide-slate-800/80 border border-slate-800 rounded-xl overflow-hidden bg-slate-950/40">
             {inspections.map((ins) => (
               <div
                 key={ins.id}
-                className="p-4 flex items-center justify-between hover:bg-slate-50 transition"
+                className="p-4 flex items-center justify-between hover:bg-slate-800/50 transition"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-semibold text-slate-800">
+                    <span className="font-mono text-xs font-semibold text-teal-400">
                       {ins.inspection_number || ins.id.slice(0, 8)}
                     </span>
                     <Badge status={ins.status} />
                   </div>
-                  <div className="text-xs text-slate-500">
-                    Stage: <span className="font-semibold">{ins.stage}</span> • Sampling: {ins.sampling_plan} • Created{' '}
+                  <div className="text-xs text-slate-400 font-mono">
+                    Stage: <span className="font-semibold text-slate-200">{ins.stage}</span> • Sampling: {ins.sampling_plan} • Created{' '}
                     {new Date(ins.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -296,13 +296,13 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
       </div>
 
       {/* Historical Decision Snapshots Section */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-base font-bold text-white">
               Historical Decision Snapshots (Phase 4C)
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-400">
               Immutable records of official Quality Manager release, rejection, and concession determinations.
             </p>
           </div>
@@ -310,13 +310,13 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
         </div>
 
         {decisions.length === 0 ? (
-          <div className="p-6 text-center text-slate-400 text-sm border border-dashed border-slate-200 rounded-lg">
+          <div className="p-6 text-center text-slate-400 text-sm border border-dashed border-slate-800 rounded-xl bg-slate-950/40 font-mono">
             No official quality decisions have been rendered on this batch.
           </div>
         ) : (
-          <div className="overflow-x-auto border border-slate-200 rounded-lg">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+          <div className="overflow-x-auto border border-slate-800 rounded-xl bg-slate-950/40">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/70 text-xs uppercase font-mono font-semibold text-slate-400 border-b border-slate-800">
                 <tr>
                   <th className="px-4 py-3">Decision</th>
                   <th className="px-4 py-3">Acting QM</th>
@@ -325,26 +325,26 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
                   <th className="px-4 py-3 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/80">
                 {decisions.map((dec) => (
-                  <tr key={dec.id} className="hover:bg-slate-50 transition">
+                  <tr key={dec.id} className="hover:bg-slate-800/50 transition">
                     <td className="px-4 py-3 font-semibold">
                       <Badge status={dec.decision} />
                     </td>
-                    <td className="px-4 py-3 text-xs font-mono text-slate-700">
+                    <td className="px-4 py-3 text-xs font-mono text-slate-300">
                       {dec.decided_by ? dec.decided_by.slice(0, 8) : 'QM'}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500">
+                    <td className="px-4 py-3 text-xs font-mono text-slate-400">
                       {dec.decided_at ? new Date(dec.decided_at).toLocaleString() : new Date(dec.created_at).toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-700 max-w-xs truncate">
+                    <td className="px-4 py-3 text-xs text-slate-300 max-w-xs truncate">
                       {dec.reason}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {dec.snapshot && (
                         <button
                           onClick={() => setViewSnapshot(dec.snapshot || null)}
-                          className="text-xs font-semibold text-sky-600 hover:text-sky-800 underline"
+                          className="text-xs font-semibold text-teal-400 hover:text-teal-300 underline cursor-pointer"
                         >
                           Inspect Snapshot
                         </button>
@@ -381,8 +381,8 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
         }}
       >
         <div className="mt-3">
-          <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-            Containment Justification <span className="text-rose-500">*</span>
+          <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+            Containment Justification <span className="text-rose-400">*</span>
           </label>
           <textarea
             required
@@ -390,7 +390,7 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
             value={holdReason}
             onChange={(e) => setHoldReason(e.target.value)}
             placeholder="Describe the operational containment reason..."
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 bg-slate-950 text-white placeholder-slate-500"
           />
         </div>
       </ConfirmDialog>
@@ -425,15 +425,15 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
           }}
           className="space-y-4"
         >
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 leading-relaxed">
+          <div className="p-3.5 bg-amber-500/15 border border-amber-500/30 rounded-xl text-xs text-amber-200 leading-relaxed">
             <span className="font-bold">Governance Warning:</span> This action records an immutable
             Phase 4C decision snapshot. If the server release gate detects active blockers, an
             unjustified RELEASE attempt will be rejected.
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Decision Outcome <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+              Decision Outcome <span className="text-rose-400">*</span>
             </label>
             <select
               value={decisionType}
@@ -442,18 +442,18 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
                   e.target.value as 'RELEASE' | 'HOLD' | 'REJECT_SCRAP' | 'CONCESSION_DEVIATION'
                 )
               }
-              className="w-full px-3 py-2 text-sm font-semibold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              className="w-full px-3.5 py-2.5 text-sm font-semibold font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white cursor-pointer"
             >
-              <option value="RELEASE">RELEASE (Authorize full shipment)</option>
-              <option value="HOLD">HOLD (Administrative Quality Hold)</option>
-              <option value="REJECT_SCRAP">REJECT_SCRAP (Scrap / permanent rejection)</option>
-              <option value="CONCESSION_DEVIATION">CONCESSION_DEVIATION (Authorize under formal deviation)</option>
+              <option value="RELEASE" className="bg-slate-900 text-white">RELEASE (Authorize full shipment)</option>
+              <option value="HOLD" className="bg-slate-900 text-white">HOLD (Administrative Quality Hold)</option>
+              <option value="REJECT_SCRAP" className="bg-slate-900 text-white">REJECT_SCRAP (Scrap / permanent rejection)</option>
+              <option value="CONCESSION_DEVIATION" className="bg-slate-900 text-white">CONCESSION_DEVIATION (Authorize under formal deviation)</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Quality Decision Justification <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+              Quality Decision Justification <span className="text-rose-400">*</span>
             </label>
             <textarea
               required
@@ -461,18 +461,18 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
               value={decisionReason}
               onChange={(e) => setDecisionReason(e.target.value)}
               placeholder="State the formal engineering rationale and review basis..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
           {decisionType === 'CONCESSION_DEVIATION' && (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-              <span className="font-semibold text-xs text-slate-700 uppercase tracking-wider block">
+            <div className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-3">
+              <span className="font-mono font-semibold text-xs text-purple-300 uppercase tracking-wider block">
                 Engineering Concession Metadata
               </span>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Concession Justification / Deviation # <span className="text-rose-500">*</span>
+                <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+                  Concession Justification / Deviation # <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -480,11 +480,11 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
                   value={concessionJustification}
                   onChange={(e) => setConcessionJustification(e.target.value)}
                   placeholder="e.g. Deviation DEV-2026-IMP-4412 approved by Chief Metallurgist"
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-900 text-white placeholder-slate-500"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
                   Special Usage Conditions & Expiration
                 </label>
                 <textarea
@@ -492,13 +492,13 @@ export const BatchDetailPage: React.FC<BatchDetailPageProps> = ({
                   value={concessionConditions}
                   onChange={(e) => setConcessionConditions(e.target.value)}
                   placeholder="e.g. Restricted to low-pressure secondary cooling pump applications only..."
-                  className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-900 text-white placeholder-slate-500"
                 />
               </div>
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setIsDecisionModalOpen(false)} type="button">
               Cancel
             </Button>

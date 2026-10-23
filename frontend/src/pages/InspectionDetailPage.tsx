@@ -208,24 +208,24 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
       </div>
 
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-6 shadow-sm backdrop-blur-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold font-mono text-slate-900">
+              <h1 className="text-xl font-bold font-mono text-white">
                 Inspection {inspection.inspection_number || inspection.id.slice(0, 10)}
               </h1>
               <Badge status={inspection.status} />
             </div>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               Registered Physical Units:{' '}
-              <span className="font-semibold text-slate-800">{items.length} item(s)</span>
+              <span className="font-semibold text-white">{items.length} item(s)</span>
               <span className="mx-2">•</span>
               Multiple photographic surfaces per physical impeller are grouped and aggregated.
             </p>
           </div>
           <div className="text-xs text-slate-400">
-            Stage: <span className="font-semibold text-slate-700">{inspection.stage}</span> • Created:{' '}
+            Stage: <span className="font-semibold text-slate-300">{inspection.stage}</span> • Created:{' '}
             {new Date(inspection.created_at).toLocaleString()}
           </div>
         </div>
@@ -234,15 +234,15 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
       {/* Main Inspection Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column: Physical Items List */}
-        <div className="lg:col-span-1 bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-4">
+        <div className="lg:col-span-1 bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm space-y-4 backdrop-blur-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
               Physical Items
             </h2>
             {isEditable && canAct && (
               <button
                 onClick={() => setIsRegisterOpen(true)}
-                className="text-xs font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1"
+                className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -253,12 +253,12 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
           </div>
 
           {items.length === 0 ? (
-            <div className="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg">
+            <div className="p-6 text-center text-xs text-slate-400 border border-dashed border-slate-800 rounded-lg bg-slate-950/40">
               No physical units registered yet.{' '}
               {isEditable && canAct && (
                 <button
                   onClick={() => setIsRegisterOpen(true)}
-                  className="text-sky-600 underline block mt-2 font-medium"
+                  className="text-cyan-400 hover:text-cyan-300 underline block mt-2 font-medium"
                 >
                   Register first unit
                 </button>
@@ -275,17 +275,17 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
                     onClick={() => setSelectedItemId(item.id)}
                     className={`p-3 rounded-lg border text-left cursor-pointer transition ${
                       isSelected
-                        ? 'border-sky-500 bg-sky-50/50 shadow-xs'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        ? 'border-cyan-500 bg-cyan-950/40 shadow-sm'
+                        : 'border-slate-800 bg-slate-950/40 hover:border-slate-700 hover:bg-slate-800/50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold text-slate-800">
+                      <span className="font-mono text-xs font-bold text-white">
                         #{idx + 1} {item.item_identifier}
                       </span>
                       <Badge status={item.status} size="sm" />
                     </div>
-                    <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
                       <span>{imagesCount} surface photo{imagesCount === 1 ? '' : 's'}</span>
                       {item.cavity_number && (
                         <span className="font-mono text-[10px] text-slate-400">
@@ -305,21 +305,21 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
           {activeItem ? (
             <>
               {/* Active Item Header */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3 backdrop-blur-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-3">
-                      <h2 className="text-lg font-bold font-mono text-slate-900">
+                      <h2 className="text-lg font-bold font-mono text-white">
                         Unit Identifier: {activeItem.item_identifier}
                       </h2>
                       <Badge status={activeItem.status} />
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      System Item ID: <span className="font-mono">{activeItem.id}</span>
+                    <p className="text-xs text-slate-400 mt-1">
+                      System Item ID: <span className="font-mono text-slate-300">{activeItem.id}</span>
                       {activeItem.cavity_number && (
                         <>
                           <span className="mx-2">•</span>
-                          Mold Cavity Index: <span className="font-mono">{activeItem.cavity_number}</span>
+                          Mold Cavity Index: <span className="font-mono text-slate-300">{activeItem.cavity_number}</span>
                         </>
                       )}
                     </p>
@@ -341,9 +341,9 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
               </div>
 
               {/* Multi-Surface Image Evidence Gallery */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
                     Photographic Evidence & ML Inference Diagnostics
                   </h3>
                   <span className="text-xs text-slate-400">
@@ -358,7 +358,7 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
               </div>
 
               {/* Human Review & Adjudication Workspace */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+              <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm backdrop-blur-sm">
                 <ReviewPanel
                   item={activeItem}
                   onReviewSubmitted={() => {
@@ -370,7 +370,7 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
               </div>
             </>
           ) : (
-            <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-xl">
+            <div className="p-12 text-center text-slate-400 bg-slate-900/90 border border-slate-800 rounded-xl backdrop-blur-sm">
               Register or select a physical unit from the list to begin inspection.
             </div>
           )}
@@ -394,8 +394,8 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Part Identifier / Casting Tag <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+              Part Identifier / Casting Tag <span className="text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -403,11 +403,11 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
               value={itemIdentifier}
               onChange={(e) => setItemIdentifier(e.target.value)}
               placeholder="e.g. SN-IMP-2026-081"
-              className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm font-mono border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
               Die Cavity Number (Optional)
             </label>
             <input
@@ -416,11 +416,11 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
               value={cavityNumber || ''}
               onChange={(e) => setCavityNumber(e.target.value ? Number(e.target.value) : undefined)}
               placeholder="e.g. 2"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setIsRegisterOpen(false)} type="button">
               Cancel
             </Button>
@@ -453,8 +453,8 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Select Photographic Evidence <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+              Select Photographic Evidence <span className="text-rose-400">*</span>
             </label>
             <input
               type="file"
@@ -465,19 +465,19 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
                   setUploadFile(e.target.files[0]);
                 }
               }}
-              className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer"
+              className="w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-cyan-800 file:text-xs file:font-semibold file:bg-cyan-950 file:text-cyan-300 hover:file:bg-cyan-900 cursor-pointer"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
                 Imaging Scope
               </label>
               <select
                 value={uploadScope}
                 onChange={(e) => setUploadScope(e.target.value as 'ITEM' | 'SURFACE' | 'BATCH_SAMPLE')}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white"
               >
                 <option value="SURFACE">Surface Detailed</option>
                 <option value="ITEM">Full Component (Item)</option>
@@ -486,13 +486,13 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
                 Surface Location
               </label>
               <select
                 value={uploadLocation}
                 onChange={(e) => setUploadLocation(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white"
               >
                 <option value="SUCTION_EYE">Suction Eye</option>
                 <option value="VANES">Impeller Vanes</option>
@@ -505,12 +505,12 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
             </div>
           </div>
 
-          <p className="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <p className="text-xs text-slate-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
             Uploaded images are immediately hashed via SHA-256 for chain-of-custody verification
             and sent to the ML inference pipeline.
           </p>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setIsUploadOpen(false)} type="button">
               Cancel
             </Button>
@@ -551,8 +551,8 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
         }}
       >
         <div className="mt-3">
-          <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-            Reason for Cancellation <span className="text-rose-500">*</span>
+          <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+            Reason for Cancellation <span className="text-rose-400">*</span>
           </label>
           <textarea
             required
@@ -560,7 +560,7 @@ export const InspectionDetailPage: React.FC<InspectionDetailPageProps> = ({
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
             placeholder="e.g. Test aborted due to camera calibration error..."
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+            className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 bg-slate-950 text-white placeholder-slate-500"
           />
         </div>
       </ConfirmDialog>

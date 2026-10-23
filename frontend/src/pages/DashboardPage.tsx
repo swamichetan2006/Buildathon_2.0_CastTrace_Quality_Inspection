@@ -4,6 +4,7 @@ import { batchesApi } from '../api/batches';
 import { inspectionsApi } from '../api/inspections';
 import { defectsApi } from '../api/defects';
 import { capaApi } from '../api/capa';
+import { QualityIntelligencePanel } from '../components/dashboard/QualityIntelligencePanel';
 import {
   Layers,
   FileCheck2,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 
 interface DashboardPageProps {
-  onNavigate: (tab: string, contextId?: string) => void;
+  onNavigate: (tab: string, contextId?: string, extraId?: string) => void;
 }
 
 /* ── Tiny helpers ────────────────────────────────────── */
@@ -729,6 +730,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           }
         />
       </div>
+
+      {/* Quality Intelligence Assistant Panel */}
+      <QualityIntelligencePanel
+        batches={batches}
+        onNavigateToIntelligence={(batchNumber, view) =>
+          onNavigate('quality-intelligence', batchNumber, view)
+        }
+        onNavigate={onNavigate}
+      />
 
       {/* ── CHARTS ROW ────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }} className="charts-grid">
