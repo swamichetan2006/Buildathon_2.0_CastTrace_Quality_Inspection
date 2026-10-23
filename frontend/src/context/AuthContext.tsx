@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<User>;
+  loginWorkspace: (username: string, password: string, allowedRoles?: UserRole[]) => Promise<User>;
   logout: () => void;
   hasRole: (...roles: (UserRole | UserRole[])[]) => boolean;
   isInspector: boolean;
@@ -65,20 +66,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('auth:expired', handleExpired);
   }, [info]);
 
-  const login = async (username: string, password: string): Promise<User> => {
+  const loginWorkspace = async (
+    username: string,
+    password: string,
+    allowedRoles?: UserRole[]
+  ): Promise<User> => {
     setIsLoading(true);
     try {
       const res = await authApi.login(username, password);
+
+      // Verify workspace authorization against actual user role returned by backend
+      if (allowedRoles && allowedRoles.length > 0) {
+        const actualRole = res.user.role;
+        const isAllowed = actualRole === 'ADMIN' || allowedRoles.includes(actualRole);
+        if (!isAllowed) {
+          // Immediately revoke session on server and clear cookies
+          try {
+            await authApi.logout();
+          } catch (e) {
+            console.warn('Post-mismatch logout cleanup failed:', e);
+          }
+          setAuthToken(null);
+          setToken(null);
+          setUser(null);
+
+          const roleError: any = new Error(
+            `Role Mismatch: Your account is assigned the role '${actualRole}', which is not authorized for this workspace.`
+          );
+          roleError.code = 'ROLE_MISMATCH';
+          roleError.actualRole = actualRole;
+          throw roleError;
+        }
+      }
+
       setAuthToken(res.access_token);
       setToken(res.access_token);
       setUser(res.user);
       return res.user;
     } catch (err: any) {
-      error('Login Failed', err.message || 'Invalid username or password.');
+      if (err.code !== 'ROLE_MISMATCH') {
+        error('Login Failed', err.message || 'Invalid username or password.');
+      }
       throw err;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const login = async (username: string, password: string): Promise<User> => {
+    return loginWorkspace(username, password);
   };
 
   const hasRole = useCallback(
@@ -103,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWorkspace,
         logout,
         hasRole,
         isInspector,
