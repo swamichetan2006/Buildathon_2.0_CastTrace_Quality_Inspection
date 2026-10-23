@@ -25,7 +25,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { info, error } = useNotification();
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } catch (e) {
+      console.warn('Logout API notification failed:', e);
+    }
     setAuthToken(null);
     setToken(null);
     setUser(null);
@@ -34,18 +39,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initialize auth state
   useEffect(() => {
     async function initAuth() {
-      const savedToken = getAuthToken();
-      if (!savedToken) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const currentUser = await authApi.getMe();
         setUser(currentUser);
-      } catch (err: any) {
-        console.warn('Session verification failed:', err.message);
-        logout();
+      } catch {
+        // Unauthenticated or expired session
+        setAuthToken(null);
+        setToken(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -54,13 +55,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
 
     const handleExpired = () => {
-      logout();
+      setAuthToken(null);
+      setToken(null);
+      setUser(null);
       info('Session Expired', 'Please log in again to continue.');
     };
 
     window.addEventListener('auth:expired', handleExpired);
     return () => window.removeEventListener('auth:expired', handleExpired);
-  }, [logout, info]);
+  }, [info]);
 
   const login = async (username: string, password: string): Promise<User> => {
     setIsLoading(true);

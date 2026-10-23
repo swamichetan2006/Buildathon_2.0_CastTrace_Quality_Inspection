@@ -419,3 +419,12 @@ class GenAIQuery(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
 
     user = relationship("User", foreign_keys=[user_id])
+
+
+class RevokedToken(Base):
+    __tablename__ = "revoked_tokens"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    token = Column(String(512), unique=True, nullable=False, index=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=False, default=get_utc_now)
+

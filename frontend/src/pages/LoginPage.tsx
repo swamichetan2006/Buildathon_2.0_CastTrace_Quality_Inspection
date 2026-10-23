@@ -317,9 +317,9 @@ export const LoginPage: React.FC = () => {
   ];
 
   const personas = [
-    { label: 'Inspector', sub: 'chen', icon: <Eye size={13} />, color: '#22D3EE', user: 'inspector_chen', pass: 'Password123!' },
-    { label: 'Supervisor', sub: 'torres', icon: <Wrench size={13} />, color: '#FBBF24', user: 'supervisor_torres', pass: 'Password123!' },
-    { label: 'Quality Mgr', sub: 'reynolds', icon: <ShieldCheck size={13} />, color: '#A78BFA', user: 'qm_reynolds', pass: 'Password123!' },
+    { label: 'Inspector', sub: 'inspector@casttrace.demo', icon: <Eye size={13} />, color: '#22D3EE', user: 'inspector@casttrace.demo', pass: 'Inspect@123' },
+    { label: 'Supervisor', sub: 'supervisor@casttrace.demo', icon: <Wrench size={13} />, color: '#FBBF24', user: 'supervisor@casttrace.demo', pass: 'Supervise@123' },
+    { label: 'Quality Mgr', sub: 'quality@casttrace.demo', icon: <ShieldCheck size={13} />, color: '#A78BFA', user: 'quality@casttrace.demo', pass: 'Quality@123' },
   ];
 
   return (
@@ -640,7 +640,7 @@ export const LoginPage: React.FC = () => {
                       fontFamily: "'DM Sans', sans-serif",
                     }}
                   >
-                    Username
+                    User ID or Email
                   </label>
                   <div style={{ position: 'relative' }}>
                     <span
@@ -662,7 +662,7 @@ export const LoginPage: React.FC = () => {
                       type="text"
                       value={username}
                       onChange={(e) => { setUsername(e.target.value); setAuthError(null); }}
-                      placeholder="e.g. qm_reynolds"
+                      placeholder="e.g. inspector@casttrace.demo"
                       autoComplete="username"
                       required
                       aria-required="true"

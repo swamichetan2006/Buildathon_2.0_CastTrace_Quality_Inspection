@@ -9,4 +9,12 @@ export const authApi = {
   getMe: async (): Promise<User> => {
     return api.get<User>('/auth/me');
   },
+
+  logout: async (): Promise<void> => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Best-effort server notification
+    }
+  },
 };

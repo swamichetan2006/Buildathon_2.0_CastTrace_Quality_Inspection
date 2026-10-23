@@ -14,6 +14,7 @@ from backend.app.models.entities import (
     Product,
     Reinspection,
     Review,
+    RevokedToken,
     User,
     WorkerHeartbeat,
 )
@@ -36,4 +37,5 @@ __all__ = [
     "AuditLog",
     "IdempotencyKey",
     "GenAIQuery",
+    "RevokedToken",
 ]

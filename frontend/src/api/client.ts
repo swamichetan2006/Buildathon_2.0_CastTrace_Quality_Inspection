@@ -19,14 +19,19 @@ export class ApiException extends Error {
 }
 
 export function getAuthToken(): string | null {
-  return localStorage.getItem('casttrace_token');
+  return sessionStorage.getItem('casttrace_token');
 }
 
 export function setAuthToken(token: string | null): void {
   if (token) {
-    localStorage.setItem('casttrace_token', token);
+    sessionStorage.setItem('casttrace_token', token);
   } else {
-    localStorage.removeItem('casttrace_token');
+    sessionStorage.removeItem('casttrace_token');
+    try {
+      localStorage.removeItem('casttrace_token');
+    } catch {
+      // Ignore if localStorage unavailable
+    }
   }
 }
 
@@ -65,6 +70,7 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
   try {
     const response = await fetch(url, {
       ...rest,
+      credentials: 'include',
       headers: requestHeaders,
       signal: controller.signal,
     });

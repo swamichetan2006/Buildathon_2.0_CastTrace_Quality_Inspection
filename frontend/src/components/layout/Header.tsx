@@ -7,16 +7,6 @@ interface HeaderProps {
   onNavigate?: (tab: string) => void;
 }
 
-const TAB_LABELS: Record<string, string> = {
-  dashboard: 'Dashboard',
-  products: 'Products Catalog',
-  batches: 'Production Batches',
-  inspections: 'Inspections & AI',
-  defects: 'Defect Registry',
-  capa: 'CAPA & Remediation',
-  'release-gates': 'Batch Release Gates',
-};
-
 /* Role-specific colors */
 const ROLE_COLOR: Record<string, string> = {
   INSPECTOR: '#2563EB',
@@ -31,18 +21,13 @@ const ROLE_BG: Record<string, string> = {
   ADMIN: '#F5F3FF',
 };
 
-export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
-  const { user, logout, login, isQualityManager, isSupervisor, isInspector } = useAuth();
+export const Header: React.FC<HeaderProps> = ({ currentTab: _currentTab }) => {
+  const { user, logout } = useAuth();
 
-  const handleRoleQuickSwitch = async (roleName: string) => {
-    if (roleName === 'INSPECTOR') await login('inspector_chen', 'Password123!');
-    else if (roleName === 'SUPERVISOR') await login('supervisor_torres', 'Password123!');
-    else if (roleName === 'QUALITY_MANAGER') await login('qm_reynolds', 'Password123!');
-  };
-
-  const displayName = user?.full_name || user?.username || '';
+  const displayName = user?.full_name || user?.username || 'User';
   const initials = displayName
     .split(' ')
+    .filter(Boolean)
     .map(n => n[0])
     .join('')
     .slice(0, 2)
@@ -55,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
     user?.role === 'INSPECTOR' ? 'Inspector' :
     user?.role === 'SUPERVISOR' ? 'Supervisor' :
     user?.role === 'QUALITY_MANAGER' ? 'Quality Manager' :
+    user?.role === 'ADMIN' ? 'Administrator' :
     user?.role || '';
 
   return (
@@ -108,44 +94,7 @@ export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
         </span>
       </div>
 
-      {/* Role Switcher */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: '#F7F8F6',
-        border: '1px solid #E7EAE8',
-        borderRadius: 8,
-        padding: '4px',
-        gap: 2,
-      }}>
-        {[
-          { id: 'INSPECTOR', label: 'Inspector', active: isInspector },
-          { id: 'SUPERVISOR', label: 'Supervisor', active: isSupervisor },
-          { id: 'QUALITY_MANAGER', label: 'Quality Manager', active: isQualityManager && !isSupervisor },
-        ].map(({ id, label, active }) => (
-          <button
-            key={id}
-            onClick={() => handleRoleQuickSwitch(id)}
-            style={{
-              padding: '5px 10px',
-              borderRadius: 6,
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontFamily: "'DM Sans', sans-serif",
-              fontWeight: active ? 600 : 400,
-              transition: 'background 0.15s, color 0.15s',
-              backgroundColor: active ? '#FFFFFF' : 'transparent',
-              color: active ? ROLE_COLOR[id] || '#142033' : '#64748B',
-              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.07)' : 'none',
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Right: Bell + User */}
+      {/* Right: Bell + User Identity + Logout */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {/* Notifications */}
         <button
@@ -172,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
         {/* Separator */}
         <div style={{ width: 1, height: 28, backgroundColor: '#E7EAE8' }} />
 
-        {/* User identity */}
+        {/* Authenticated User Identity */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 32,
@@ -203,7 +152,8 @@ export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
             </div>
             <div style={{
               fontSize: 10,
-              color: '#8A96A8',
+              color: roleColor,
+              fontWeight: 500,
               fontFamily: "'DM Sans', sans-serif",
               lineHeight: 1.2,
             }}>
@@ -218,20 +168,20 @@ export const Header: React.FC<HeaderProps> = ({ currentTab }) => {
           onClick={logout}
           title="Log Out"
           style={{
-            width: 30,
-            height: 30,
-            borderRadius: 6,
-            border: 'none',
-            backgroundColor: 'transparent',
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            border: '1px solid #E7EAE8',
+            backgroundColor: '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
             color: '#8A96A8',
-            transition: 'background 0.15s, color 0.15s',
+            transition: 'all 0.15s ease',
           }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#8A96A8'; }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#FEE2E2'; e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.borderColor = '#FCA5A5'; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#FFFFFF'; e.currentTarget.style.color = '#8A96A8'; e.currentTarget.style.borderColor = '#E7EAE8'; }}
         >
           <LogOut size={14} />
         </button>

@@ -2,14 +2,14 @@ from datetime import datetime, timedelta, timezone
 from typing import Callable, List, Optional
 import bcrypt
 import jwt
-from fastapi import Depends, Header, status
+from fastapi import Depends, Header, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from backend.app.config import settings
 from backend.app.core.errors import AppException
 from backend.app.database import get_db
-from backend.app.models.entities import User
+from backend.app.models.entities import RevokedToken, User
 
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(
@@ -62,6 +62,14 @@ def decode_access_token(token: str) -> dict:
 
 
 def get_user_by_token(token: str, db: Session) -> User:
+    revoked = db.query(RevokedToken).filter(RevokedToken.token == token).first()
+    if revoked:
+        raise AppException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            code="TOKEN_REVOKED",
+            message="Authentication session has been revoked. Please log in again.",
+        )
+
     payload = decode_access_token(token)
     user_id: Optional[str] = payload.get("sub")
     if not user_id:
@@ -89,18 +97,36 @@ def get_user_by_token(token: str, db: Session) -> User:
     return user
 
 
+def extract_token_from_request(request: Request) -> Optional[str]:
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        return auth_header[7:].strip()
+    return request.cookies.get("casttrace_session") or request.cookies.get("access_token")
+
+
+def revoke_token(token: str, db: Session) -> None:
+    if not token:
+        return
+    existing = db.query(RevokedToken).filter(RevokedToken.token == token).first()
+    if not existing:
+        db.add(RevokedToken(token=token))
+        db.commit()
+
+
 def get_current_user(
+    request: Request,
     token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    if not token:
+    effective_token = token or extract_token_from_request(request)
+    if not effective_token:
         raise AppException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             code="UNAUTHENTICATED",
-            message="Authentication credentials were not provided in request header.",
+            message="Authentication credentials were not provided in request header or session cookie.",
         )
 
-    return get_user_by_token(token, db)
+    return get_user_by_token(effective_token, db)
 
 
 def require_roles(allowed_roles: List[str]) -> Callable:

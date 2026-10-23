@@ -1,6 +1,5 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
 import { batchesApi } from '../api/batches';
 import { inspectionsApi } from '../api/inspections';
 import { defectsApi } from '../api/defects';
@@ -15,7 +14,6 @@ import {
   Clock,
   TrendingUp,
   CheckCircle2,
-  PauseCircle,
   BarChart2,
   CalendarDays,
 } from 'lucide-react';
@@ -479,8 +477,6 @@ const ViewAll: React.FC<{ onClick: () => void; label?: string }> = ({ onClick, l
    Main DashboardPage
 ────────────────────────────────────────────────────── */
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
-  const { user } = useAuth();
-
   const { data: batches = [], isLoading: batchLoading } = useQuery({
     queryKey: ['batches-list'],
     queryFn: () => batchesApi.list(),
