@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Cpu,
   Activity,
+  Sparkles,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -62,6 +63,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onNavigate }) => {
       label: 'Batch Release Gates',
       icon: <ShieldCheck className="w-4 h-4" />,
       allowed: true,
+      highlight: true,
+    },
+    {
+      id: 'quality-intelligence',
+      label: 'Quality Intelligence',
+      icon: <Sparkles className="w-4 h-4 text-teal-400" />,
+      allowed: Boolean(user && ['INSPECTOR', 'SUPERVISOR', 'QUALITY_MANAGER', 'ADMIN'].includes(user.role)),
       highlight: true,
     },
     {

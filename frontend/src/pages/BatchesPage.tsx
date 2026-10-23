@@ -97,8 +97,8 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
       {/* Top bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Casting Batches</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Casting Batches</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Manufacturing production runs, containment states, and quality gates.
           </p>
         </div>
@@ -120,10 +120,10 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
             placeholder="Search by batch number or product name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-900 text-white placeholder-slate-500 shadow-sm"
           />
           <svg
-            className="w-4 h-4 text-slate-400 absolute left-3 top-3"
+            className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -135,7 +135,7 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+          className="px-3.5 py-2.5 text-sm font-medium font-mono border border-slate-700 rounded-xl bg-slate-900 shadow-sm text-slate-200 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 cursor-pointer"
         >
           <option value="ALL">All Lifecycle Statuses</option>
           <option value="PENDING">Pending Inspection</option>
@@ -148,60 +148,60 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
 
         <button
           onClick={() => refetch()}
-          className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm transition"
+          className="px-4 py-2.5 text-sm font-medium text-slate-300 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 hover:text-white shadow-sm transition cursor-pointer"
         >
           Refresh
         </button>
       </div>
 
       {/* Batch Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">Loading production batches...</div>
+          <div className="p-8 text-center text-slate-400 font-mono text-sm">Loading production batches...</div>
         ) : filteredBatches.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <p className="font-semibold text-slate-700">No batches found</p>
-            <p className="text-sm mt-1">Adjust the status filter or create a new batch.</p>
+          <div className="p-12 text-center text-slate-400">
+            <p className="font-semibold text-slate-300 text-base">No batches found</p>
+            <p className="text-sm mt-1 text-slate-500">Adjust the status filter or create a new batch.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/70 text-xs uppercase font-mono font-semibold text-slate-400 border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-3">Batch Number</th>
-                  <th className="px-6 py-3">Product Model</th>
-                  <th className="px-6 py-3">Declared Lot Size</th>
-                  <th className="px-6 py-3">Quality Status</th>
-                  <th className="px-6 py-3">Heat / Melt</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3.5">Batch Number</th>
+                  <th className="px-6 py-3.5">Product Model</th>
+                  <th className="px-6 py-3.5">Declared Lot Size</th>
+                  <th className="px-6 py-3.5">Quality Status</th>
+                  <th className="px-6 py-3.5">Heat / Melt</th>
+                  <th className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/80">
                 {filteredBatches.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50 transition">
+                  <tr key={b.id} className="hover:bg-slate-800/50 transition">
                     <td className="px-6 py-4">
                       <button
                         onClick={() => onSelectBatch(b.id)}
-                        className="font-mono font-semibold text-sky-700 hover:text-sky-900 hover:underline"
+                        className="font-mono font-semibold text-teal-400 hover:text-teal-300 hover:underline cursor-pointer"
                       >
                         {b.batch_number}
                       </button>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-medium text-slate-900">{b.product?.name || 'Impeller'}</span>
+                      <span className="font-medium text-white">{b.product?.name || 'Impeller'}</span>
                       {b.product?.sku && (
                         <span className="ml-2 text-xs font-mono text-slate-400">
                           ({b.product.sku})
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-700">
+                    <td className="px-6 py-4 font-mono text-slate-300">
                       {b.declared_quantity} physical units
                     </td>
                     <td className="px-6 py-4">
                       <Badge status={b.status} />
                     </td>
-                    <td className="px-6 py-4 text-xs font-mono text-slate-500">
+                    <td className="px-6 py-4 text-xs font-mono text-slate-400">
                       {b.heat_number || '—'}
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
@@ -213,14 +213,14 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
                               setHoldBatch(b);
                               setHoldReason('');
                             }}
-                            className="text-xs font-semibold px-2 py-1 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded border border-amber-200"
+                            className="text-xs font-semibold px-2.5 py-1 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 rounded-lg border border-amber-500/30 transition cursor-pointer"
                           >
                             Place Hold
                           </button>
                         )}
                       <button
                         onClick={() => onSelectBatch(b.id)}
-                        className="text-xs font-semibold px-2.5 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded border border-sky-200"
+                        className="text-xs font-semibold px-2.5 py-1 bg-teal-500/15 text-teal-300 hover:bg-teal-500/25 rounded-lg border border-teal-500/30 transition cursor-pointer"
                       >
                         Inspect & Govern →
                       </button>
@@ -254,8 +254,8 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Batch / Lot Identifier <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+              Batch / Lot Identifier <span className="text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -263,22 +263,22 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
               placeholder="e.g. BATCH-2026-IMP-001"
               value={newBatchNumber}
               onChange={(e) => setNewBatchNumber(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 font-mono bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Impeller Product Model <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+              Impeller Product Model <span className="text-rose-400">*</span>
             </label>
             <select
               required
               value={newProductId}
               onChange={(e) => setNewProductId(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white cursor-pointer"
             >
               <option value="" disabled>Select product model...</option>
               {products.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="bg-slate-900 text-white">
                   {p.sku} — {p.name}
                 </option>
               ))}
@@ -286,8 +286,8 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                Declared Lot Quantity <span className="text-rose-500">*</span>
+              <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+                Declared Lot Quantity <span className="text-rose-400">*</span>
               </label>
               <input
                 type="number"
@@ -295,11 +295,11 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
                 required
                 value={newQuantity}
                 onChange={(e) => setNewQuantity(Number(e.target.value))}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
                 Foundry Heat Number
               </label>
               <input
@@ -307,12 +307,12 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
                 placeholder="e.g. HEAT-9942"
                 value={newHeatNumber}
                 onChange={(e) => setNewHeatNumber(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
               Production Notes / Shift
             </label>
             <textarea
@@ -320,11 +320,11 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
               value={newNotes}
               onChange={(e) => setNewNotes(e.target.value)}
               placeholder="Furnace notes, mold preparation..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)} type="button">
               Cancel
             </Button>
@@ -355,8 +355,8 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
         }}
       >
         <div className="mt-3">
-          <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-            Operational Hold Reason <span className="text-rose-500">*</span>
+          <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+            Operational Hold Reason <span className="text-rose-400">*</span>
           </label>
           <textarea
             required
@@ -364,7 +364,7 @@ export const BatchesPage: React.FC<BatchesPageProps> = ({ onSelectBatch, selecte
             value={holdReason}
             onChange={(e) => setHoldReason(e.target.value)}
             placeholder="e.g. Cluster of surface porosity detected on suction vanes during shift 1..."
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 bg-slate-950 text-white placeholder-slate-500"
           />
         </div>
       </ConfirmDialog>

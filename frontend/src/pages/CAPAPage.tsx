@@ -19,11 +19,13 @@ import ReinspectionModal from '../components/domain/ReinspectionModal';
 
 interface CAPAPageProps {
   initialDefectId?: string;
+  initialCapaId?: string;
   onNavigateToDefect?: (defectId: string) => void;
 }
 
 export const CAPAPage: React.FC<CAPAPageProps> = ({
   initialDefectId,
+  initialCapaId,
   onNavigateToDefect,
 }) => {
   const { user, hasRole } = useAuth();
@@ -33,15 +35,15 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
   const [activeTab, setActiveTab] = useState<'CAPA' | 'REINSPECTIONS'>('CAPA');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [verificationFilter, setVerificationFilter] = useState<string>('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialCapaId || '');
 
   // Modals state
   const [selectedCapa, setSelectedCapa] = useState<CorrectiveAction | null>(null);
   const [reinspectionDefectId, setReinspectionDefectId] = useState<string | null>(null);
   const [reinspectionCapaId, setReinspectionCapaId] = useState<string | null>(null);
 
-  // Create CAPA modal state
-  const [isCreateOpen, setIsCreateOpen] = useState(Boolean(initialDefectId));
+  // Create CAPA modal state - only open if initialDefectId is provided without initialCapaId
+  const [isCreateOpen, setIsCreateOpen] = useState(Boolean(initialDefectId && !initialCapaId));
   const [targetDefectId, setTargetDefectId] = useState(initialDefectId || '');
   const [title, setTitle] = useState('');
   const [actionType, setActionType] = useState<'REWORK' | 'SCRAP' | 'PROCESS_ADJUSTMENT' | 'TRAINING'>('REWORK');
@@ -127,10 +129,10 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-bold text-white tracking-tight">
             CAPA & Independent Verification
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-400 mt-1">
             Root cause investigation, Four-Eyes separation of duties, and post-remediation reinspection.
           </p>
         </div>
@@ -146,13 +148,13 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-slate-200 flex gap-6">
+      <div className="border-b border-slate-800 flex gap-6">
         <button
           onClick={() => setActiveTab('CAPA')}
           className={`pb-3 text-sm font-semibold border-b-2 transition ${
             activeTab === 'CAPA'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-500 text-cyan-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           Corrective Actions ({capas.length})
@@ -161,8 +163,8 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
           onClick={() => setActiveTab('REINSPECTIONS')}
           className={`pb-3 text-sm font-semibold border-b-2 transition ${
             activeTab === 'REINSPECTIONS'
-              ? 'border-sky-600 text-sky-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-500 text-cyan-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           Reinspection Records ({reinspections.length})
@@ -179,7 +181,7 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                 placeholder="Search by ID, action #, defect or title..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+                className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500 shadow-sm"
               />
             </div>
 
@@ -187,7 +189,7 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2 text-sm font-medium border border-slate-700 rounded-lg bg-slate-950 shadow-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="ALL">All Implementation Statuses</option>
                 <option value="OPEN">OPEN (Draft/Assigned)</option>
@@ -201,7 +203,7 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
               <select
                 value={verificationFilter}
                 onChange={(e) => setVerificationFilter(e.target.value)}
-                className="w-full px-3 py-2 text-sm font-medium border border-slate-300 rounded-lg bg-white shadow-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2 text-sm font-medium border border-slate-700 rounded-lg bg-slate-950 shadow-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="ALL">All Verification Statuses</option>
                 <option value="PENDING">PENDING (Awaiting Independent Verification)</option>
@@ -212,18 +214,18 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
           </div>
 
           {/* CAPA Table */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-sm overflow-hidden backdrop-blur-sm">
             {capasLoading ? (
-              <div className="p-8 text-center text-slate-500">Loading CAPA records...</div>
+              <div className="p-8 text-center text-slate-400">Loading CAPA records...</div>
             ) : filteredCapas.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
-                <p className="font-semibold text-slate-700">No CAPA records found</p>
+              <div className="p-12 text-center text-slate-400">
+                <p className="font-semibold text-white">No CAPA records found</p>
                 <p className="text-sm mt-1">Create a new CAPA plan or adjust filters.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                <table className="w-full text-left text-sm text-slate-300">
+                  <thead className="bg-slate-950/70 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
                     <tr>
                       <th className="px-6 py-3">Action Number</th>
                       <th className="px-6 py-3">Title & Linked Defect</th>
@@ -233,19 +235,31 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                       <th className="px-6 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredCapas.map((capa) => (
-                      <tr key={capa.id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-4 font-mono font-medium text-slate-900">
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredCapas.map((capa) => {
+                      const isSelected = Boolean(
+                        initialCapaId &&
+                          (capa.id === initialCapaId || capa.action_number === initialCapaId)
+                      );
+                      return (
+                        <tr
+                          key={capa.id}
+                          className={
+                            isSelected
+                              ? 'bg-cyan-950/40 ring-1 ring-cyan-500 transition'
+                              : 'hover:bg-slate-800/50 transition'
+                          }
+                        >
+                        <td className="px-6 py-4 font-mono font-medium text-white">
                           {capa.action_number || capa.id.slice(0, 10)}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="font-semibold text-slate-800">{capa.title}</span>
+                          <span className="font-semibold text-slate-200">{capa.title}</span>
                           <div className="text-xs text-slate-400">
                             Defect:{' '}
                             <button
                               onClick={() => onNavigateToDefect && onNavigateToDefect(capa.defect_id)}
-                              className="font-mono text-sky-700 hover:underline"
+                              className="font-mono text-cyan-400 hover:text-cyan-300 hover:underline"
                             >
                               {capa.defect?.defect_number || capa.defect_id.slice(0, 10)}
                             </button>
@@ -257,7 +271,7 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                         <td className="px-6 py-4">
                           <Badge status={capa.verification_status} />
                         </td>
-                        <td className="px-6 py-4 font-mono text-xs text-slate-700">
+                        <td className="px-6 py-4 font-mono text-xs text-slate-300">
                           {capa.assignee?.full_name || (capa.assigned_to ? capa.assigned_to.slice(0, 8) : 'Unassigned')}
                         </td>
                         <td className="px-6 py-4 text-right space-x-2">
@@ -277,14 +291,15 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                                 setReinspectionDefectId(capa.defect_id);
                                 setReinspectionCapaId(capa.id);
                               }}
-                              className="text-xs text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100"
+                              className="text-xs text-emerald-300 bg-emerald-950/50 border border-emerald-800/80 hover:bg-emerald-900/60"
                             >
                               Reinspect Unit
                             </Button>
                           )}
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                   </tbody>
                 </table>
               </div>
@@ -293,18 +308,18 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
         </div>
       ) : (
         /* Reinspections Tab */
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl shadow-sm overflow-hidden backdrop-blur-sm">
           {reinspectionsLoading ? (
-            <div className="p-8 text-center text-slate-500">Loading reinspection history...</div>
+            <div className="p-8 text-center text-slate-400">Loading reinspection history...</div>
           ) : reinspections.length === 0 ? (
-            <div className="p-12 text-center text-slate-500">
-              <p className="font-semibold text-slate-700">No reinspection records</p>
+            <div className="p-12 text-center text-slate-400">
+              <p className="font-semibold text-white">No reinspection records</p>
               <p className="text-sm mt-1">Reinspections are executed on verified CAPA remediation lots.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+              <table className="w-full text-left text-sm text-slate-300">
+                <thead className="bg-slate-950/70 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
                   <tr>
                     <th className="px-6 py-3">Reinspection Number</th>
                     <th className="px-6 py-3">Defect ID</th>
@@ -313,22 +328,22 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                     <th className="px-6 py-3">Timestamp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-800/60">
                   {reinspections.map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-50 transition">
-                      <td className="px-6 py-4 font-mono font-medium text-slate-900">
+                    <tr key={r.id} className="hover:bg-slate-800/50 transition">
+                      <td className="px-6 py-4 font-mono font-medium text-white">
                         {r.reinspection_number || r.id.slice(0, 10)}
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-slate-700">
+                      <td className="px-6 py-4 font-mono text-xs text-cyan-400">
                         {r.defect_id ? r.defect_id.slice(0, 10) : 'N/A'}
                       </td>
                       <td className="px-6 py-4">
                         <Badge status={r.outcome} />
                       </td>
-                      <td className="px-6 py-4 text-xs text-slate-600 max-w-sm truncate">
+                      <td className="px-6 py-4 text-xs text-slate-300 max-w-sm truncate">
                         {r.notes || '—'}
                       </td>
-                      <td className="px-6 py-4 text-xs text-slate-500">
+                      <td className="px-6 py-4 text-xs text-slate-400">
                         {new Date(r.created_at).toLocaleString()}
                       </td>
                     </tr>
@@ -396,14 +411,14 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Target Defect <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+              Target Defect <span className="text-rose-400">*</span>
             </label>
             <select
               required
               value={targetDefectId}
               onChange={(e) => setTargetDefectId(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white"
             >
               <option value="" disabled>Select defect requiring CAPA...</option>
               {defects
@@ -418,8 +433,8 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                CAPA Plan Title <span className="text-rose-500">*</span>
+              <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                CAPA Plan Title <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
@@ -427,17 +442,17 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Weld Repair and Radiographic Check"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
                 Remediation Type
               </label>
               <select
                 value={actionType}
                 onChange={(e) => setActionType(e.target.value as any)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+                className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white"
               >
                 <option value="REWORK">REWORK (Fettling / Weld overlay)</option>
                 <option value="SCRAP">SCRAP (Part unrecoverable)</option>
@@ -449,8 +464,8 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                Assigned Implementer ID <span className="text-rose-500">*</span>
+              <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+                Assigned Implementer ID <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
@@ -458,11 +473,11 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                 value={assignedToUserId}
                 onChange={(e) => setAssignedToUserId(e.target.value)}
                 placeholder="User UUID of implementer..."
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2 text-sm font-mono border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
                 Target Due Date
               </label>
               <input
@@ -470,14 +485,14 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
                 required
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Remediation Action Description <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
+              Remediation Action Description <span className="text-rose-400">*</span>
             </label>
             <textarea
               required
@@ -485,12 +500,12 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Step-by-step engineering instructions for repair/remediation..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
               Root Cause Analysis
             </label>
             <textarea
@@ -498,12 +513,12 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
               value={rootCause}
               onChange={(e) => setRootCause(e.target.value)}
               placeholder="Detailed metallurgic or procedural root cause findings (e.g. Mold degassing issue)..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-semibold uppercase text-slate-300 mb-1">
               Preventive Action (Systemic)
             </label>
             <textarea
@@ -511,11 +526,11 @@ export const CAPAPage: React.FC<CAPAPageProps> = ({
               value={preventiveActionText}
               onChange={(e) => setPreventiveActionText(e.target.value)}
               placeholder="Process modifications, tooling adjustments, or calibration changes to prevent recurrence..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3 py-2 text-sm border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)} type="button">
               Cancel
             </Button>

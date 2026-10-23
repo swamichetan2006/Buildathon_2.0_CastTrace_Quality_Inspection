@@ -14,6 +14,7 @@ import DefectsPage from './pages/DefectsPage';
 import CAPAPage from './pages/CAPAPage';
 import ReleaseGatesPage from './pages/ReleaseGatesPage';
 import HealthPage from './pages/HealthPage';
+import QualityIntelligencePage from './pages/QualityIntelligencePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,7 +35,12 @@ function MainRouter() {
   // Detail drill-down states
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [selectedInspectionId, setSelectedInspectionId] = useState<string | null>(null);
+  const [selectedDefectId, setSelectedDefectId] = useState<string | null>(null);
   const [filterCapaDefectId, setFilterCapaDefectId] = useState<string | undefined>(undefined);
+  const [selectedCapaId, setSelectedCapaId] = useState<string | null>(null);
+  const [selectedReleaseGateBatchId, setSelectedReleaseGateBatchId] = useState<string | null>(null);
+  const [selectedBatchForIntelligence, setSelectedBatchForIntelligence] = useState<string | null>(null);
+  const [intelligenceInitialView, setIntelligenceInitialView] = useState<'lot-summary' | 'attention' | 'recurrence'>('lot-summary');
 
   if (isLoading) {
     return (
@@ -64,16 +70,42 @@ function MainRouter() {
     setActiveTab('inspections');
   };
 
-  const handleNavigateToCapa = (defectId?: string) => {
+  const handleSelectDefect = (defectId?: string) => {
+    setSelectedDefectId(defectId || null);
+    setActiveTab('defects');
+  };
+
+  const handleNavigateToCapa = (defectId?: string, capaId?: string) => {
     setFilterCapaDefectId(defectId);
+    setSelectedCapaId(capaId || null);
     setActiveTab('capa');
+  };
+
+  const handleNavigateToReleaseGates = (batchId?: string) => {
+    setSelectedReleaseGateBatchId(batchId || null);
+    setActiveTab('release-gates');
+  };
+
+  const handleNavigateToIntelligence = (batchId?: string, initialView?: 'lot-summary' | 'attention' | 'recurrence') => {
+    setSelectedBatchForIntelligence(batchId || null);
+    if (initialView) setIntelligenceInitialView(initialView);
+    setActiveTab('quality-intelligence');
   };
 
   const handleTabChange = (tab: string) => {
     // Reset specific drill-downs when explicitly clicking navigation items
     if (tab !== 'batches') setSelectedBatchId(null);
     if (tab !== 'inspections') setSelectedInspectionId(null);
-    if (tab !== 'capa') setFilterCapaDefectId(undefined);
+    if (tab !== 'defects') setSelectedDefectId(null);
+    if (tab !== 'capa') {
+      setFilterCapaDefectId(undefined);
+      setSelectedCapaId(null);
+    }
+    if (tab !== 'release-gates') setSelectedReleaseGateBatchId(null);
+    if (tab !== 'quality-intelligence') {
+      setSelectedBatchForIntelligence(null);
+      setIntelligenceInitialView('lot-summary');
+    }
     setActiveTab(tab);
   };
 
@@ -81,7 +113,7 @@ function MainRouter() {
     <AppShell activeTab={activeTab} onTabChange={handleTabChange}>
       {activeTab === 'dashboard' && (
         <DashboardPage
-          onNavigate={(target, id) => {
+          onNavigate={(target, id, extraId) => {
             if (target === 'batch' && id) {
               handleSelectBatch(id);
             } else if (target === 'inspection' && id) {
@@ -89,11 +121,13 @@ function MainRouter() {
             } else if (target === 'review') {
               setActiveTab('inspections');
             } else if (target === 'defect') {
-              setActiveTab('defects');
+              handleSelectDefect(id);
             } else if (target === 'capa') {
-              setActiveTab('capa');
+              handleNavigateToCapa(undefined, id);
             } else if (target === 'release-gates') {
-              setActiveTab('release-gates');
+              handleNavigateToReleaseGates(id);
+            } else if (target === 'quality-intelligence') {
+              handleNavigateToIntelligence(id, extraId as any);
             }
           }}
         />
@@ -113,8 +147,8 @@ function MainRouter() {
             batchId={selectedBatchId}
             onBack={() => setSelectedBatchId(null)}
             onNavigateToInspection={(insId) => handleSelectInspection(insId)}
-            onNavigateToDefect={() => setActiveTab('defects')}
-            onNavigateToCapa={(cId) => handleNavigateToCapa(cId)}
+            onNavigateToDefect={(dId) => handleSelectDefect(dId)}
+            onNavigateToCapa={(cId) => handleNavigateToCapa(undefined, cId)}
           />
         ) : (
           <BatchesPage onSelectBatch={handleSelectBatch} />
@@ -127,7 +161,7 @@ function MainRouter() {
             inspectionId={selectedInspectionId}
             onBack={() => setSelectedInspectionId(null)}
             onNavigateToBatch={(bId) => handleSelectBatch(bId)}
-            onNavigateToDefect={() => setActiveTab('defects')}
+            onNavigateToDefect={(dId) => handleSelectDefect(dId)}
           />
         ) : (
           <InspectionsPage onSelectInspection={handleSelectInspection} />
@@ -136,6 +170,7 @@ function MainRouter() {
 
       {activeTab === 'defects' && (
         <DefectsPage
+          initialDefectId={selectedDefectId || undefined}
           onNavigateToCapa={(defId) => handleNavigateToCapa(defId)}
           onNavigateToBatch={(bId) => handleSelectBatch(bId)}
         />
@@ -144,16 +179,38 @@ function MainRouter() {
       {activeTab === 'capa' && (
         <CAPAPage
           initialDefectId={filterCapaDefectId}
-          onNavigateToDefect={() => setActiveTab('defects')}
+          initialCapaId={selectedCapaId || undefined}
+          onNavigateToDefect={(dId) => handleSelectDefect(dId)}
         />
       )}
 
       {activeTab === 'release-gates' && (
         <ReleaseGatesPage
+          initialBatchId={selectedReleaseGateBatchId || undefined}
           onSelectBatch={handleSelectBatch}
           onNavigateToInspection={handleSelectInspection}
-          onNavigateToDefect={() => setActiveTab('defects')}
-          onNavigateToCapa={(cId) => handleNavigateToCapa(cId)}
+          onNavigateToDefect={(dId) => handleSelectDefect(dId)}
+          onNavigateToCapa={(cId) => handleNavigateToCapa(undefined, cId)}
+        />
+      )}
+
+      {activeTab === 'quality-intelligence' && (
+        <QualityIntelligencePage
+          initialBatchId={selectedBatchForIntelligence}
+          initialView={intelligenceInitialView}
+          onNavigate={(target, id, extraId) => {
+            if (target === 'batch' && id) {
+              handleSelectBatch(id);
+            } else if (target === 'inspection' && id) {
+              handleSelectInspection(id);
+            } else if (target === 'defect') {
+              handleSelectDefect(id);
+            } else if (target === 'capa') {
+              handleNavigateToCapa(id, extraId);
+            } else if (target === 'release-gates') {
+              handleNavigateToReleaseGates(id);
+            }
+          }}
         />
       )}
 

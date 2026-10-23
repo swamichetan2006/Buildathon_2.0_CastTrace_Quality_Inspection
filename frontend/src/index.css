@@ -13,3 +13,71 @@ body {
   background-color: #070b14;
   color: #f1f5f9;
 }
+
+/* Accessible Dark Industrial Theme - Native Form Controls */
+select {
+  color-scheme: dark;
+  background-color: #0b1120;
+  color: #f8fafc;
+}
+
+option, optgroup {
+  background-color: #0b1120 !important;
+  color: #f8fafc !important;
+  padding: 6px 10px;
+}
+
+option:checked,
+option:hover,
+option:focus {
+  background-color: #1e293b !important;
+  color: #38bdf8 !important;
+}
+
+option:disabled {
+  color: #64748b !important;
+  background-color: #070b14 !important;
+}
+
+input, textarea {
+  color-scheme: dark;
+  color: #f8fafc;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #64748b;
+  opacity: 1;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  color-scheme: dark;
+  accent-color: #0d9488;
+  cursor: pointer;
+}
+
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* Custom Dark Industrial Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #070b14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+  border: 1px solid #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+

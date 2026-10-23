@@ -306,3 +306,5 @@ export interface ApiError {
     request_id?: string;
   };
 }
+
+export * from './intelligence';

@@ -7,6 +7,7 @@ import { defectsApi } from '../api/defects';
 import { capaApi } from '../api/capa';
 import { StatusBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
+import { QualityIntelligencePanel } from '../components/dashboard/QualityIntelligencePanel';
 import {
   Layers,
   FileCheck2,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react';
 
 interface DashboardPageProps {
-  onNavigate: (tab: string, contextId?: string) => void;
+  onNavigate: (tab: string, contextId?: string, extraId?: string) => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
@@ -156,6 +157,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+
+      {/* Quality Intelligence Assistant Panel */}
+      <QualityIntelligencePanel
+        batches={batches}
+        onNavigateToIntelligence={(batchNumber, view) =>
+          onNavigate('quality-intelligence', batchNumber, view)
+        }
+        onNavigate={onNavigate}
+      />
 
       {/* Role-Specific Work Queues */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

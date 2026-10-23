@@ -65,8 +65,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Product Catalog</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-white tracking-tight">Product Catalog</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Registered pump impeller models, casting alloys, drawings, and specifications.
           </p>
         </div>
@@ -88,10 +88,10 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
             placeholder="Search by SKU or model name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white shadow-sm"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-900 text-white placeholder-slate-500 shadow-sm"
           />
           <svg
-            className="w-4 h-4 text-slate-400 absolute left-3 top-3"
+            className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -101,43 +101,43 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
         </div>
         <button
           onClick={() => refetch()}
-          className="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+          className="px-4 py-2.5 text-sm font-medium text-slate-300 bg-slate-800 border border-slate-700 rounded-xl hover:bg-slate-700 hover:text-white shadow-sm transition cursor-pointer"
         >
           Refresh
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">Loading catalog...</div>
+          <div className="p-8 text-center text-slate-400 font-mono text-sm">Loading catalog...</div>
         ) : error ? (
-          <div className="p-8 text-center text-rose-600">Failed to load product catalog.</div>
+          <div className="p-8 text-center text-rose-400 font-mono">Failed to load product catalog.</div>
         ) : filteredProducts.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <p className="font-medium text-slate-700">No products found</p>
-            <p className="text-sm mt-1">Try adjusting your search criteria or register a new product.</p>
+          <div className="p-12 text-center text-slate-400">
+            <p className="font-semibold text-slate-300 text-base">No products found</p>
+            <p className="text-sm mt-1 text-slate-500">Try adjusting your search criteria or register a new product.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/70 text-xs uppercase font-mono font-semibold text-slate-400 border-b border-slate-800">
                 <tr>
-                  <th className="px-6 py-3">SKU / Model</th>
-                  <th className="px-6 py-3">Part Name</th>
-                  <th className="px-6 py-3">Material</th>
-                  <th className="px-6 py-3">Drawing #</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3.5">SKU / Model</th>
+                  <th className="px-6 py-3.5">Part Name</th>
+                  <th className="px-6 py-3.5">Material</th>
+                  <th className="px-6 py-3.5">Drawing #</th>
+                  <th className="px-6 py-3.5">Status</th>
+                  <th className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800/80">
                 {filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50 transition">
-                    <td className="px-6 py-4 font-mono font-medium text-slate-900">{p.sku}</td>
-                    <td className="px-6 py-4 font-medium text-slate-800">{p.name}</td>
-                    <td className="px-6 py-4 text-slate-500">{p.material || 'Cast Bronze / SS'}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{p.drawing_number || '—'}</td>
+                  <tr key={p.id} className="hover:bg-slate-800/50 transition">
+                    <td className="px-6 py-4 font-mono font-semibold text-teal-400">{p.sku}</td>
+                    <td className="px-6 py-4 font-medium text-white">{p.name}</td>
+                    <td className="px-6 py-4 text-slate-300">{p.material || 'Cast Bronze / SS'}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-400">{p.drawing_number || '—'}</td>
                     <td className="px-6 py-4">
                       <Badge status={p.is_archived ? 'ARCHIVED' : 'ACTIVE'} />
                     </td>
@@ -145,7 +145,7 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
                       {onSelectProduct && (
                         <button
                           onClick={() => onSelectProduct(p.id)}
-                          className="text-xs font-semibold text-sky-600 hover:text-sky-800"
+                          className="text-xs font-semibold text-teal-400 hover:text-teal-300 cursor-pointer"
                         >
                           View Batches →
                         </button>
@@ -179,8 +179,8 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
           className="space-y-4"
         >
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Product SKU / Part Number <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+              Product SKU / Part Number <span className="text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -188,12 +188,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
               value={newSku}
               onChange={(e) => setNewSku(e.target.value)}
               placeholder="e.g. CPI-65-200"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
+              className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-              Model Name <span className="text-rose-500">*</span>
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
+              Model Name <span className="text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -201,12 +201,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="e.g. Closed Impeller 200mm"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
                 Alloy / Material
               </label>
               <input
@@ -214,11 +214,11 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
                 value={newMaterial}
                 onChange={(e) => setNewMaterial(e.target.value)}
                 placeholder="e.g. CF8M Stainless"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+              <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
                 Engineering Drawing #
               </label>
               <input
@@ -226,12 +226,12 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
                 value={newDrawingNumber}
                 onChange={(e) => setNewDrawingNumber(e.target.value)}
                 placeholder="e.g. DWG-2026-04"
-                className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+                className="w-full px-3.5 py-2.5 text-sm font-mono border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
+            <label className="block text-xs font-mono font-semibold uppercase text-slate-300 mb-1.5 tracking-wider">
               Description / Casting Spec
             </label>
             <textarea
@@ -239,11 +239,11 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({ onSelectProduct }) =
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
               placeholder="Casting alloy, tolerance specs, surface finish standards..."
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-slate-950 text-white placeholder-slate-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
             <Button variant="secondary" onClick={() => setIsCreateOpen(false)} type="button">
               Cancel
             </Button>

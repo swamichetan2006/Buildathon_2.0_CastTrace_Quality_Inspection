@@ -16,8 +16,8 @@ from sqlalchemy import (
     UniqueConstraint,
     Index,
     text,
+    JSON,
 )
-from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import relationship
 
 from backend.app.database import Base
@@ -197,7 +197,7 @@ class ModelRun(Base):
     status = Column(String(32), nullable=False, default="QUEUED")  # QUEUED, PROCESSING, SUCCEEDED, FAILED, CANCELLED
     predicted_label = Column(String(32), nullable=True)  # Strictly binary: GOOD or DEFECTIVE
     score = Column(Numeric(6, 5), nullable=True)
-    score_type = Column(String(32), nullable=False, default="PROBABILITY_DEFECTIVE")
+    score_type = Column(String(64), nullable=False, default="PROBABILITY_DEFECTIVE")
     threshold_applied = Column(Numeric(6, 5), nullable=False, default=0.50000)
     routing_outcome = Column(String(32), nullable=True)  # LIKELY_OK, NEEDS_REVIEW, LIKELY_DEFECTIVE
     routing_reason = Column(Text, nullable=True)

@@ -1,6 +1,7 @@
 from datetime import date, datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, Query, Request, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend.app.core.errors import AppException
@@ -68,7 +69,7 @@ def get_batch(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> BatchResponse:
-    batch = db.query(Batch).filter(Batch.id == batch_id).first()
+    batch = db.query(Batch).filter(or_(Batch.id == batch_id, Batch.batch_number == batch_id)).first()
     if not batch:
         raise AppException(
             status_code=status.HTTP_404_NOT_FOUND,
