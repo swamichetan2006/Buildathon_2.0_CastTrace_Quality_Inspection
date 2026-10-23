@@ -140,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onNavigate }) => {
           </div>
           <div className="flex justify-between">
             <span>ENGINE:</span>
-            <span className="text-emerald-400">SQLite 3</span>
+            <span className="text-emerald-400">PostgreSQL</span>
           </div>
           <div className="flex justify-between">
             <span>MODEL:</span>

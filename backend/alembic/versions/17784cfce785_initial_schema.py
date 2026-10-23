@@ -223,7 +223,7 @@ def upgrade() -> None:
     sa.Column('status', sa.String(length=32), nullable=False),
     sa.Column('predicted_label', sa.String(length=32), nullable=True),
     sa.Column('score', sa.Numeric(precision=6, scale=5), nullable=True),
-    sa.Column('score_type', sa.String(length=32), nullable=False),
+    sa.Column('score_type', sa.String(length=64), nullable=False),
     sa.Column('threshold_applied', sa.Numeric(precision=6, scale=5), nullable=False),
     sa.Column('processing_latency_ms', sa.Integer(), nullable=True),
     sa.Column('attempt_number', sa.Integer(), nullable=False),

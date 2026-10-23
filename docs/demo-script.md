@@ -108,7 +108,7 @@ Act 7: Auditability & Immutable Snapshot (Quality Manager)
 * **Persona:** Continue as **Inspector Chen** (`inspector_chen`).
 * **Action 3.1 — Trigger Inference Pipeline:**
   * Click **"Run AI Defect Analysis"** for the inspection items.
-  * Explain to audience: *The FastAPI backend enqueues the job in SQLite; the detached background worker picks up the job with an atomic lease, evaluates image quality and unfamiliarity, and runs ResNet-18.*
+  * Explain to audience: *The FastAPI backend enqueues the job in PostgreSQL; the detached background worker picks up the job with an atomic lease, evaluates image quality and unfamiliarity, and runs ResNet-18.*
 * **Action 3.2 — View AI Predictions:**
   * In $\approx 1$ second, results populate live:
     * Item 1 (`SN-IMP-001`): Model Score `0.00013` $\rightarrow$ Triage Badge **LIKELY_OK** (Green).

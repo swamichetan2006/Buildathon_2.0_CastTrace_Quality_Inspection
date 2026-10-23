@@ -26,7 +26,7 @@ export const HealthPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">System Diagnostics & Health</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Service status, SQLite database connectivity, and ML inference worker monitoring.
+            Service status, PostgreSQL database connectivity, and ML inference worker monitoring.
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={handleManualRefresh}>
@@ -54,7 +54,7 @@ export const HealthPage: React.FC = () => {
         <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 shadow-sm space-y-3 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Storage Engine</span>
-            <span className="text-xs font-mono font-bold text-cyan-400">PostgreSQL / SQLite</span>
+            <span className="text-xs font-mono font-bold text-cyan-400">PostgreSQL</span>
           </div>
           <div className="text-2xl font-bold text-white">Connected</div>
           <p className="text-xs text-slate-400">

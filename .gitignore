@@ -41,6 +41,7 @@ dist/
 *.db
 *.sqlite
 *.sqlite3
+*.dump
 backups/
 backend/backups/
 

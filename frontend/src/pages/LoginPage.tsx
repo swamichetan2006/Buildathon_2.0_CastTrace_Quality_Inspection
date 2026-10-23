@@ -152,7 +152,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Security & System Info */}
         <div className="text-center text-xs text-slate-500 font-mono">
-          FastAPI & SQLAlchemy 2 • Role-Based Access Control • Local SQLite
+          FastAPI & SQLAlchemy 2 • Role-Based Access Control • PostgreSQL
         </div>
       </div>
     </div>

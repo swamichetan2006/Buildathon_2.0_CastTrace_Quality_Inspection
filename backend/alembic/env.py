@@ -14,8 +14,13 @@ import backend.app.models  # noqa: F401 - Register all models with Base.metadata
 
 config = context.config
 
-# Overwrite sqlalchemy.url with dynamic settings or ALEMBIC_DATABASE_URL override
-db_url = os.environ.get("ALEMBIC_DATABASE_URL") or settings.DATABASE_URL or config.get_main_option("sqlalchemy.url")
+# Dynamic database URL with override precedence:
+# 1. ALEMBIC_DATABASE_URL environment variable
+# 2. Programmatic config.set_main_option("sqlalchemy.url", ...) (if valid and not placeholder)
+# 3. Application default settings.DATABASE_URL
+raw_url = config.get_main_option("sqlalchemy.url")
+explicit_url = raw_url if raw_url and not raw_url.startswith("driver://") else None
+db_url = os.environ.get("ALEMBIC_DATABASE_URL") or explicit_url or settings.DATABASE_URL
 config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
@@ -32,7 +37,6 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -53,11 +57,9 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        is_sqlite = connection.dialect.name == "sqlite"
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            render_as_batch=is_sqlite,
         )
 
         with context.begin_transaction():

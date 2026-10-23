@@ -1247,8 +1247,9 @@ def find_historical_similar_defects(
 
         total_score = min(100.0, round(sum(a.weight for a in breakdown), 1))
 
-        # Filter out negligible matches (unless explicit link exists or high category/product match)
-        if total_score < 25.0 and not has_prior_link:
+        # Filter out negligible matches (unless explicit link exists or cross-product match allowed)
+        min_threshold = 10.0 if include_cross_product else 25.0
+        if total_score < min_threshold and not has_prior_link:
             continue
 
         tier = "HIGH" if total_score >= 75.0 else ("MODERATE" if total_score >= 45.0 else "LOW")

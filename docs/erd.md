@@ -2,7 +2,7 @@
 
 **Document Version:** 1.0.0  
 **Phase:** 1A (Architecture and Contracts)  
-**Target Environment:** SQLite (Development) / PostgreSQL (Production Compatible)  
+**Target Environment:** PostgreSQL(Primary & Exclusive Storage Engine)
 **ORM:** SQLAlchemy 2.0 (Declarative Mappings)
 
 ---
@@ -19,7 +19,7 @@
 5. **Resilient ML Execution:** A failed `model_run` is preserved in the database. Retries increment `attempt_number` and spawn a new `model_run` record referencing the previous run, preserving failure diagnostic logs.
 6. **Graceful Degraded Review:** Human inspectors can complete a `review` even if ML inference fails, times out, or produces low confidence.
 7. **Audit & Idempotency:** State changes, security events, and overrides generate immutable `audit_log` records. Mutating API endpoints require `Idempotency-Key` headers tracked in `idempotency_keys` to prevent duplicate submissions on network retries.
-8. **Dialect Portability:** Column types use portable SQLAlchemy 2 types (`String(36)` for UUIDs, `DateTime(timezone=True)` stored as ISO-8601 UTC strings in SQLite and `TIMESTAMPTZ` in Postgres, and standard `JSON` / `Text`).
+8. **Dialect Standard:** Column types use portable SQLAlchemy 2 types (`String(36)` for UUIDs, `DateTime(timezone=True)` stored as `TIMESTAMPTZ` in PostgreSQL, and standard `JSON` / `Text`).
 
 ---
 
